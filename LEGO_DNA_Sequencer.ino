@@ -13,7 +13,7 @@
 
  **************************************************************************/
 
-#define PROGRAM "LEGO DNA Sequencer"
+#define PROGRAM "LEGO DNA Sequencer - Main Program"
 #define VERSION "Ver 0.1 2022-12-24"
 
 #define DEBUG_OUTPUT 1
@@ -21,7 +21,11 @@
 
 
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println();
+  Serial.println(PROGRAM);
+  Serial.println(VERSION);
 
 }
 
