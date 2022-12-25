@@ -24,6 +24,23 @@
 int Contrast = 75;
 LiquidCrystal lcd(8, 7, 5, 4, 3, 2);
 
+//Includes the Arduino Stepper Library
+#include <Stepper.h>
+
+// Defines the number of steps per rotation
+const int stepsPerRevolution = 2038;
+
+#define STEPPER_PIN_1 9
+#define STEPPER_PIN_2 10
+#define STEPPER_PIN_3 11
+#define STEPPER_PIN_4 12
+
+#define STEPS_PER_LEGO_BLOCK  550
+
+// Creates an instance of stepper class
+// Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
+Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
+
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
 
@@ -75,7 +92,8 @@ void setup() {
     delay(500);
   }
 */  
-  
+  myStepper.setSpeed(10);
+
   lcd.setCursor(0, 0);
   lcd.print("LEGO DNA Sqncr  ");
 
@@ -169,6 +187,12 @@ void loop() {
 
     while (digitalRead(13) == LOW)
      ;
+
+    if (i<9)
+      myStepper.step(STEPS_PER_LEGO_BLOCK);
+    else
+      myStepper.step(0 - (STEPS_PER_LEGO_BLOCK * 9));
+      
 }
 
 
