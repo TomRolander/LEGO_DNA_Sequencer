@@ -18,7 +18,25 @@
 
 #define DEBUG_OUTPUT 1
 
+#define STATE_START       0
+#define STATE_SEQUENCING  1
+
+static int iState = STATE_START;
+
 #define LED_TCS34725  A0
+
+static bool bCommandLineMode = false;
+
+// Rotary Encoder Inputs
+#define CLK A1
+#define DT A2
+#define SW 13
+
+int counter = 0;
+int currentStateCLK;
+int lastStateCLK;
+String currentDir ="";
+unsigned long lastButtonPress = 0;
 
 #include <LiquidCrystal.h>
 int Contrast = 75;
@@ -65,7 +83,13 @@ void setup() {
   Serial.println(PROGRAM);
   Serial.println(VERSION);
 
-  pinMode(13, INPUT_PULLUP);
+  // Set encoder pins as inputs
+  pinMode(CLK,INPUT);
+  pinMode(DT,INPUT);
+  pinMode(SW, INPUT_PULLUP);
+
+  // Read the initial state of CLK
+  lastStateCLK = digitalRead(CLK);
 
   analogWrite(6, Contrast);
   lcd.begin(16, 2);
@@ -75,6 +99,9 @@ void setup() {
 
   if (tcs.begin()) {
     Serial.println("Found sensor");
+    // LED off to prevent overheating
+    tcs.setInterrupt(true);
+    
   } else {
     Serial.println("No TCS34725 found ... check your connections");
     while (1);
@@ -94,14 +121,27 @@ void setup() {
 */  
   myStepper.setSpeed(10);
 
-  lcd.setCursor(0, 0);
-  lcd.print("LEGO DNA Sqncr  ");
+  char cBuffer[5];
+  int nChars;
+  long lStartTime = millis();
 
-  lcd.setCursor(0, 1);
-  lcd.print(" Push Button    ");
+  Serial.println("Hit debuger Send to enter Command Line Mode");
 
-  while (digitalRead(13) == HIGH)
-    ;
+  while (Serial.available() <= 0)
+  {
+    if (millis() > lStartTime + 5000)
+      break;
+  }
+  if (Serial.available() > 0)
+  {
+    bCommandLineMode = true;
+    help();
+    nChars = Serial.readBytes(cBuffer, sizeof(cBuffer));
+  }
+  else
+  {
+    StartSequencer();    
+  }
 }
 
 void updateShiftRegister(int iSelect)
@@ -118,6 +158,8 @@ void GetLEGOColor()
 {
 
   uint16_t r, g, b, c;
+
+  delay(50);
   tcs.getRawData(&r, &g, &b, &c);
   Serial.print("Red: "); Serial.print(r, DEC); Serial.print(" ");
   Serial.print("Green: "); Serial.print(g, DEC); Serial.print(" ");
@@ -132,11 +174,12 @@ void GetLEGOColor()
   }
   else
   {
-    if(r < 50 && g < 50 && g < 50){
+    /* if(r < 50 && g < 50 && g < 50){
         updateShiftRegister(CLEAR);
         Serial.print("Nada");
     }
-    else if(g > b && g > r){
+    else */
+    if(g > b && g > r){
         updateShiftRegister(GREEN);
         Serial.print("A Green");
         //tft.print("A");
@@ -156,7 +199,140 @@ void GetLEGOColor()
   Serial.println(" ");
   
 }
+
+void StartSequencer()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("LEGO DNA Sqncr  ");
+
+  lcd.setCursor(0, 1);
+  lcd.print(" Push Button    ");
+
+  while (digitalRead(SW) == HIGH)
+    ;  
+}
+
+void help()
+{
+  Serial.println("Command Line Mode:");
+  Serial.println("  Lxxxxx to go Left  xxxxx steps");
+  Serial.println("  Rxxxxx to go Right xxxxx steps");
+  Serial.println("  Sxxxxx set RPM to xxxxx"); 
+  Serial.println("  C to Read Color Sensor");
+  Serial.println("  K Read Color Sensor until Send");
+  Serial.println("  1 Color Sensor Light ON");
+  Serial.println("  0 Color Sensor Light OFF");
+  Serial.println("  E to Start Sequencer");    
+}
+
 void loop() {
+
+  if (bCommandLineMode)
+  {
+    if (Serial.available() > 0)
+    {
+      char cBuffer[7];
+      int nChars;
+      int iValue = 0;
+
+      nChars = Serial.readBytes(cBuffer, sizeof(cBuffer));
+      Serial.print("nChars = ");
+      Serial.println(nChars);
+      cBuffer[nChars] = '\0';
+      Serial.print("cBuffer = ");
+      Serial.println(cBuffer);
+
+      if (nChars == 1)
+      {
+        switch (cBuffer[0])
+        {
+          case 'E':
+            StartSequencer();
+            while (digitalRead(13) == LOW)
+              ;  
+            bCommandLineMode = false;
+            break;
+
+          case 'C':
+            GetLEGOColor();
+            break;
+
+          case 'K':
+            while (Serial.available() <= 0)
+            {
+              GetLEGOColor();
+              delay(500);
+            }
+            nChars = Serial.readBytes(cBuffer, sizeof(cBuffer));
+            help();
+            break;
+
+          case '1':
+            tcs.setInterrupt(false);
+            digitalWrite (LED_TCS34725, HIGH); 
+            break;
+
+          case '0':
+            tcs.setInterrupt(true);
+            digitalWrite (LED_TCS34725, LOW); 
+            break;
+
+          default:
+            Serial.println("Unrecognized command!");
+            help();
+            break;           
+        }
+        return;
+      }
+      if (nChars != 6 ||
+          (cBuffer[0] != 'L' && cBuffer[0] != 'R' && cBuffer[0] != 'S'))
+      {
+        help();
+        return;
+      }
+
+      for (int i=1; i<6; i++)
+      {
+        iValue = (iValue * 10) + (cBuffer[i]-'0');
+      }
+      Serial.print("Value = ");
+      if (cBuffer[0] == 'R')
+        iValue = 0 - iValue;
+      Serial.println(iValue);
+
+      if (cBuffer[0] == 'S')
+        myStepper.setSpeed(iValue);
+      else
+      {
+        myStepper.step(iValue);
+        GetLEGOColor();
+      }
+    }
+    return;    
+  }
+
+  if (iState == STATE_START)
+  {
+   // Read the button state
+    int btnState = digitalRead(SW);
+  
+    //If we detect LOW signal, button is pressed
+    if (btnState == LOW) {
+      //if 50ms have passed since last LOW pulse, it means that the
+      //button has been pressed, released and pressed again
+      if (millis() - lastButtonPress > 50) {
+        Serial.println("Button pressed!");
+        lcd.setCursor(0, 1);
+        lcd.print("Button pressed! ");
+        iState == STATE_SEQUENCING;
+      }
+  
+      // Remember last button press event
+      lastButtonPress = millis();
+    }
+    return;
+  }
+   
   lcd.setCursor(0, 0);
   lcd.print("Load LEGO Tray  ");
 
@@ -170,6 +346,7 @@ void loop() {
 
   for (int i=0; i<10; i++)
   {
+    tcs.setInterrupt(false);
     digitalWrite (LED_TCS34725, HIGH); 
     
     lcd.setCursor(0, 0);
@@ -183,6 +360,7 @@ void loop() {
       ;
       
     GetLEGOColor();
+    tcs.setInterrupt(true);
     digitalWrite (LED_TCS34725, LOW); 
 
     while (digitalRead(13) == LOW)
