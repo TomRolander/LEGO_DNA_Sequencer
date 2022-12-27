@@ -157,12 +157,12 @@ void GetLEGOColor()
     UpdateLCD(YELLOW);
     Serial.print("C Yellow");
   }
-/*  
   else
-   if(r >= 40){
+   if(r >= 140){
       UpdateLCD(RED);
       Serial.print("G Red");
   }
+/*  
   else 
    if(b >= 50){
       UpdateLCD(BLUE);
