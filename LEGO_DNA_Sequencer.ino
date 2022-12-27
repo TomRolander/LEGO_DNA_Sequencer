@@ -73,12 +73,10 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #define BLUE    1
 #define YELLOW  0
 
-#define LATCHPIN_74HC595 A2
-#define CLOCKPIN_74HC595 A3
-#define DATAPIN_74HC595  A1
-
 /* Initialise with specific int time and gain values */
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+#define INTEGRATION_TIME_DELAY 50
+
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 
 
 void setup() {
@@ -112,18 +110,6 @@ void setup() {
     while (1);
   }
 
-  // Set all the pins of 74HC595 as OUTPUT
-  pinMode(LATCHPIN_74HC595, OUTPUT);
-  pinMode(DATAPIN_74HC595, OUTPUT);  
-  pinMode(CLOCKPIN_74HC595, OUTPUT);
-/*
-  updateShiftRegister(CLEAR);
-  for (int i = 3; i >= 0; i--) // Turn all the LEDs ON one by one.
-  {
-    updateShiftRegister(i);
-    delay(500);
-  }
-*/  
   myStepper.setSpeed(10);
 
   char cBuffer[5];
@@ -149,14 +135,9 @@ void setup() {
   }
 }
 
-void updateShiftRegister(int iSelect)
+void UpdateLCD(int iColor)
 {
-  int iLEDs = 0;
-  if (iSelect != -1 && iSelect <= 3)
-    bitSet(iLEDs, iSelect);
-   digitalWrite(LATCHPIN_74HC595, LOW);
-   shiftOut(DATAPIN_74HC595, CLOCKPIN_74HC595, LSBFIRST, iLEDs);
-   digitalWrite(LATCHPIN_74HC595, HIGH);
+  
 }
 
 void GetLEGOColor()
@@ -164,41 +145,43 @@ void GetLEGOColor()
 
   uint16_t r, g, b, c;
 
-  delay(50);
+  delay(INTEGRATION_TIME_DELAY);
   tcs.getRawData(&r, &g, &b, &c);
   Serial.print("Red: "); Serial.print(r, DEC); Serial.print(" ");
   Serial.print("Green: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("Blue: "); Serial.print(b, DEC); Serial.print(" ");
   Serial.print("Color: "); Serial.print(c, DEC); Serial.print(" ");
 
-  if(c > 250)
+  if(c > 600 /*200*/)
   {
-    updateShiftRegister(YELLOW);
+    UpdateLCD(YELLOW);
     Serial.print("C Yellow");
-    //tft.print("C");
+  }
+/*  
+  else
+   if(r >= 40){
+      UpdateLCD(RED);
+      Serial.print("G Red");
+  }
+  else 
+   if(b >= 50){
+      UpdateLCD(BLUE);
+      Serial.print("T Blue");
+  }
+*/  
+  else 
+  if(g > b && g > r){
+      UpdateLCD(GREEN);
+      Serial.print("A Green");
   }
   else
-  {
-    /* if(r < 50 && g < 50 && g < 50){
-        updateShiftRegister(CLEAR);
-        Serial.print("Nada");
-    }
-    else */
-    if(g > b && g > r){
-        updateShiftRegister(GREEN);
-        Serial.print("A Green");
-        //tft.print("A");
-    }
-    else if(r > g && r > b){
-        updateShiftRegister(RED);
-        Serial.print("G Red");
-        //tft.print("G");
-    }
-    else /*if(b > g)*/{
-        updateShiftRegister(BLUE);
-        Serial.print("T Blue");
-        //tft.print("T");
-    }
+  if(r > g && r > b){
+      UpdateLCD(RED);
+      Serial.print("G Red");
+  }
+  else /*if(b > g)*/{
+      UpdateLCD(BLUE);
+      Serial.print("T Blue");
   }
   
   Serial.println(" ");
@@ -270,6 +253,8 @@ void loop() {
       Serial.print("cBuffer = ");
       Serial.println(cBuffer);
 
+      cBuffer[0] = toupper(cBuffer[0]);
+
       if (nChars == 1)
       {
         switch (cBuffer[0])
@@ -278,7 +263,7 @@ void loop() {
             StartSequencer();
             iState = STATE_START;
             bCommandLineMode = false;
-            break;
+            return;
 
           case 'M':
             bAutomated = false;
@@ -365,22 +350,18 @@ void loop() {
    
   if (iState == STATE_LOAD_TRAY)
   {
-    if (GetButtonPressed())
-    {
-      iState = STATE_SEQUENCING;
-    }
-    else
-    {
-      return;
-    }
+    while (GetButtonPressed() == false)
+      ;
+    iState = STATE_SEQUENCING;
   }
 
-  myStepper.step(STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2);
-  
   // STATE_SEQUENCING
   tcs.setInterrupt(false);
   digitalWrite (LED_TCS34725, HIGH);
-   
+
+  myStepper.setSpeed(10);
+  myStepper.step(STEPS_PER_LEGO_BLOCK * 2);
+     
   for (int i=0; i<10; i++)
   {
     if (bAutomated == false)
@@ -405,7 +386,9 @@ void loop() {
     {
       tcs.setInterrupt(true);
       digitalWrite (LED_TCS34725, LOW); 
-      myStepper.step(0 - (STEPS_PER_LEGO_BLOCK * 9));
+      myStepper.setSpeed(15);
+      myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + (STEPS_PER_LEGO_BLOCK * 2)));
+      myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
     }      
 }
