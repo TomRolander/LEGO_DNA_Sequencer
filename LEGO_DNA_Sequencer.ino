@@ -19,9 +19,14 @@
 #define DEBUG_OUTPUT 1
 
 #define STATE_START       0
-#define STATE_SEQUENCING  1
+#define STATE_LOAD_TRAY   1
+#define STATE_SEQUENCING  2
 
 static int iState = STATE_START;
+
+static bool bAutomated = true;
+
+#define STEPS_PER_LEGO_BLOCK  550
 
 #define LED_TCS34725  A0
 
@@ -207,22 +212,45 @@ void StartSequencer()
 
   lcd.setCursor(0, 1);
   lcd.print(" Push Button    ");
-
-  while (digitalRead(SW) == HIGH)
-    ;  
 }
 
 void help()
 {
   Serial.println("Command Line Mode:");
-  Serial.println("  Lxxxxx to go Left  xxxxx steps");
-  Serial.println("  Rxxxxx to go Right xxxxx steps");
-  Serial.println("  Sxxxxx set RPM to xxxxx"); 
+  Serial.println("  Lxxxx to go Left  xxxx steps");
+  Serial.println("  Rxxxx to go Right xxxx steps");
+  Serial.println("  Sxxxx set RPM to xxxx"); 
   Serial.println("  C to Read Color Sensor");
   Serial.println("  K Read Color Sensor until Send");
   Serial.println("  1 Color Sensor Light ON");
   Serial.println("  0 Color Sensor Light OFF");
+  Serial.println("  M Manual Sequencer");    
+  Serial.println("  A Automated Sequencer");    
   Serial.println("  E to Start Sequencer");    
+}
+
+bool GetButtonPressed()
+{
+  // Read the button state
+  int btnState = digitalRead(SW);
+  
+  //If we detect LOW signal, button is pressed
+  if (btnState == LOW) {
+    //if 50ms have passed since last LOW pulse, it means that the
+    //button has been pressed, released and pressed again
+    if (millis() - lastButtonPress > 50) {
+      Serial.println("Button pressed!");
+      lcd.setCursor(0, 1);
+      lcd.print("Button pressed! ");
+      iState = STATE_SEQUENCING;
+    }
+  
+    // Remember last button press event
+    lastButtonPress = millis();
+    return (true);
+  }
+  return (false);
+  
 }
 
 void loop() {
@@ -248,11 +276,18 @@ void loop() {
         {
           case 'E':
             StartSequencer();
-            while (digitalRead(13) == LOW)
-              ;  
+            iState = STATE_START;
             bCommandLineMode = false;
             break;
 
+          case 'M':
+            bAutomated = false;
+            break;
+          
+          case 'A':
+            bAutomated = true;
+            break;
+          
           case 'C':
             GetLEGOColor();
             break;
@@ -284,14 +319,14 @@ void loop() {
         }
         return;
       }
-      if (nChars != 6 ||
+      if (nChars != 5 ||
           (cBuffer[0] != 'L' && cBuffer[0] != 'R' && cBuffer[0] != 'S'))
       {
         help();
         return;
       }
 
-      for (int i=1; i<6; i++)
+      for (int i=1; i<5; i++)
       {
         iValue = (iValue * 10) + (cBuffer[i]-'0');
       }
@@ -313,64 +348,66 @@ void loop() {
 
   if (iState == STATE_START)
   {
-   // Read the button state
-    int btnState = digitalRead(SW);
-  
-    //If we detect LOW signal, button is pressed
-    if (btnState == LOW) {
-      //if 50ms have passed since last LOW pulse, it means that the
-      //button has been pressed, released and pressed again
-      if (millis() - lastButtonPress > 50) {
-        Serial.println("Button pressed!");
-        lcd.setCursor(0, 1);
-        lcd.print("Button pressed! ");
-        iState == STATE_SEQUENCING;
-      }
-  
-      // Remember last button press event
-      lastButtonPress = millis();
+    if (GetButtonPressed())
+    {
+      iState = STATE_LOAD_TRAY;      
+      lcd.setCursor(0, 0);
+      lcd.print("Load LEGO Tray  ");
+    
+      lcd.setCursor(0, 1);
+      lcd.print(" Push Button    ");
     }
-    return;
+    else
+    {
+      return;
+    }
   }
    
-  lcd.setCursor(0, 0);
-  lcd.print("Load LEGO Tray  ");
+  if (iState == STATE_LOAD_TRAY)
+  {
+    if (GetButtonPressed())
+    {
+      iState = STATE_SEQUENCING;
+    }
+    else
+    {
+      return;
+    }
+  }
 
-  lcd.setCursor(0, 1);
-  lcd.print(" Push Button    ");
-
-  while (digitalRead(13) == HIGH)
-    ;
-  while (digitalRead(13) == LOW)
-    ;
-
+  myStepper.step(STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2);
+  
+  // STATE_SEQUENCING
+  tcs.setInterrupt(false);
+  digitalWrite (LED_TCS34725, HIGH);
+   
   for (int i=0; i<10; i++)
   {
-    tcs.setInterrupt(false);
-    digitalWrite (LED_TCS34725, HIGH); 
-    
-    lcd.setCursor(0, 0);
-    lcd.print("Position LEGO #");
-    lcd.print(i);
-    
-    lcd.setCursor(0, 1);
-    lcd.print(" Push Button    ");
-
-    while (digitalRead(13) == HIGH)
-      ;
+    if (bAutomated == false)
+    {    
+      lcd.setCursor(0, 0);
+      lcd.print("Position LEGO #");
+      lcd.print(i);
       
-    GetLEGOColor();
-    tcs.setInterrupt(true);
-    digitalWrite (LED_TCS34725, LOW); 
+      lcd.setCursor(0, 1);
+      lcd.print(" Push Button    ");
+  
+      while (GetButtonPressed() == false)
+        ;
+    }
 
-    while (digitalRead(13) == LOW)
-     ;
+    delay(500);
+    GetLEGOColor();
 
     if (i<9)
       myStepper.step(STEPS_PER_LEGO_BLOCK);
     else
+    {
+      tcs.setInterrupt(true);
+      digitalWrite (LED_TCS34725, LOW); 
       myStepper.step(0 - (STEPS_PER_LEGO_BLOCK * 9));
-      
+      iState = STATE_LOAD_TRAY;
+    }      
 }
 
 
