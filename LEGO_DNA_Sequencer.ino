@@ -17,6 +17,7 @@
 #define VERSION "Ver 0.1 2022-12-24"
 
 #define DEBUG_OUTPUT 1
+#define DEBUG_MODE   1
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -68,10 +69,10 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #include "Adafruit_TCS34725.h"
 
 #define CLEAR   -1
-#define RED     3
-#define GREEN   2
-#define BLUE    1
-#define YELLOW  0
+#define RED     'R'
+#define GREEN   'G'
+#define BLUE    'B'
+#define YELLOW  'Y'
 
 /* Initialise with specific int time and gain values */
 #define INTEGRATION_TIME_DELAY 50
@@ -116,28 +117,20 @@ void setup() {
   int nChars;
   long lStartTime = millis();
 
-  Serial.println("Hit debuger Send to enter Command Line Mode");
-
-  while (Serial.available() <= 0)
-  {
-    if (millis() > lStartTime + 5000)
-      break;
-  }
-  if (Serial.available() > 0)
-  {
-    bCommandLineMode = true;
-    help();
-    nChars = Serial.readBytes(cBuffer, sizeof(cBuffer));
-  }
-  else
-  {
-    StartSequencer();    
-  }
+#if DEBUG_MODE
+  bCommandLineMode = true;
+  lcd.setCursor(0, 0);
+  lcd.print("LEGO DNA Sqncr  ");
+  lcd.setCursor(0, 1);
+  lcd.print("Debugger Console");
+#else
+  StartSequencer();    
+#endif
 }
 
-void UpdateLCD(int iColor)
+void UpdateLCD(char cColor)
 {
-  
+  lcd.print(cColor);
 }
 
 void GetLEGOColor()
@@ -152,23 +145,21 @@ void GetLEGOColor()
   Serial.print("Blue: "); Serial.print(b, DEC); Serial.print(" ");
   Serial.print("Color: "); Serial.print(c, DEC); Serial.print(" ");
 
-  if(c > 600 /*200*/)
+  if(c > 1000 /*200*/)
   {
     UpdateLCD(YELLOW);
     Serial.print("C Yellow");
   }
-  else
-   if(r >= 140){
+  else 
+  if(r >= 225){
       UpdateLCD(RED);
       Serial.print("G Red");
-  }
-/*  
+  }  
   else 
-   if(b >= 50){
+   if(b >= 300){
       UpdateLCD(BLUE);
       Serial.print("T Blue");
   }
-*/  
   else 
   if(g > b && g > r){
       UpdateLCD(GREEN);
@@ -225,7 +216,7 @@ bool GetButtonPressed()
       Serial.println("Button pressed!");
       lcd.setCursor(0, 1);
       lcd.print("Button pressed! ");
-      iState = STATE_SEQUENCING;
+      //iState = STATE_SEQUENCING;
     }
   
     // Remember last button press event
@@ -335,6 +326,9 @@ void loop() {
   {
     if (GetButtonPressed())
     {
+      while (digitalRead(SW) == LOW)
+        ;
+      
       iState = STATE_LOAD_TRAY;      
       lcd.setCursor(0, 0);
       lcd.print("Load LEGO Tray  ");
@@ -350,17 +344,28 @@ void loop() {
    
   if (iState == STATE_LOAD_TRAY)
   {
+Serial.println("STATE_LOAD_TRAY");
     while (GetButtonPressed() == false)
       ;
     iState = STATE_SEQUENCING;
   }
+Serial.println("GetButtonPressed()");
+
+  lcd.setCursor(0, 0);
+  lcd.print("Sequencing LEGOs");
+
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
+  
+  lcd.setCursor(0, 1);
+
 
   // STATE_SEQUENCING
   tcs.setInterrupt(false);
   digitalWrite (LED_TCS34725, HIGH);
 
   myStepper.setSpeed(10);
-  myStepper.step(STEPS_PER_LEGO_BLOCK * 2);
+  myStepper.step(STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2);
      
   for (int i=0; i<10; i++)
   {
@@ -387,7 +392,7 @@ void loop() {
       tcs.setInterrupt(true);
       digitalWrite (LED_TCS34725, LOW); 
       myStepper.setSpeed(15);
-      myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + (STEPS_PER_LEGO_BLOCK * 2)));
+      myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + (STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2)));
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
     }      
