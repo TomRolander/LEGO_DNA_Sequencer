@@ -69,10 +69,10 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #include "Adafruit_TCS34725.h"
 
 #define CLEAR   -1
-#define RED     'R'
-#define GREEN   'G'
-#define BLUE    'B'
-#define YELLOW  'Y'
+#define RED     'G'
+#define GREEN   'A'
+#define BLUE    'T'
+#define YELLOW  'C'
 
 /* Initialise with specific int time and gain values */
 #define INTEGRATION_TIME_DELAY 50
@@ -133,9 +133,10 @@ void UpdateLCD(char cColor)
   lcd.print(cColor);
 }
 
-void GetLEGOColor()
+char GetLEGOColor()
 {
-
+  char cRetcode = '\0';
+  
   uint16_t r, g, b, c;
 
   delay(INTEGRATION_TIME_DELAY);
@@ -148,35 +149,42 @@ void GetLEGOColor()
   if(c > 1000 /*200*/)
   {
     UpdateLCD(YELLOW);
+    cRetcode = YELLOW;
     Serial.print("C Yellow");
   }
   else 
   if(r >= 225){
       UpdateLCD(RED);
+      cRetcode = RED;
       Serial.print("G Red");
   }  
   else 
    if(b >= 300){
       UpdateLCD(BLUE);
+      cRetcode = BLUE;
       Serial.print("T Blue");
   }
   else 
   if(g > b && g > r){
       UpdateLCD(GREEN);
+      cRetcode = GREEN;
       Serial.print("A Green");
   }
   else
   if(r > g && r > b){
       UpdateLCD(RED);
+      cRetcode = RED;
       Serial.print("G Red");
   }
   else /*if(b > g)*/{
       UpdateLCD(BLUE);
+      cRetcode = BLUE;
       Serial.print("T Blue");
   }
   
   Serial.println(" ");
-  
+
+  return (cRetcode);
 }
 
 void StartSequencer()
@@ -366,15 +374,17 @@ Serial.println("GetButtonPressed()");
 
   myStepper.setSpeed(10);
   myStepper.step(STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2);
+
+  char sDNASequence[11];
+  sDNASequence[10] = '\0';
      
   for (int i=0; i<10; i++)
   {
     if (bAutomated == false)
     {    
       lcd.setCursor(0, 0);
-      lcd.print("Position LEGO #");
-      lcd.print(i);
-      
+      lcd.print("Position LEGO # ");
+      lcd.print(i);     
       lcd.setCursor(0, 1);
       lcd.print(" Push Button    ");
   
@@ -383,7 +393,7 @@ Serial.println("GetButtonPressed()");
     }
 
     delay(500);
-    GetLEGOColor();
+    sDNASequence[i] = GetLEGOColor();
 
     if (i<9)
       myStepper.step(STEPS_PER_LEGO_BLOCK);
@@ -395,7 +405,29 @@ Serial.println("GetButtonPressed()");
       myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + (STEPS_PER_LEGO_BLOCK + STEPS_PER_LEGO_BLOCK/2)));
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
-    }      
+      lcd.setCursor(0, 0);
+      lcd.print("Done... Push Btn");
+      while (GetButtonPressed() == false)
+        ;
+      while (digitalRead(SW) == LOW)
+        ;
+      lcd.setCursor(0, 0);
+      lcd.print("Successful match");
+      lcd.setCursor(0, 1);
+      if (strcmp(sDNASequence,"ATTGGTCATT") == 0)
+        lcd.print("  Mako Shark    ");
+      else
+        lcd.print(" U N K N O W N  ");
+      while (GetButtonPressed() == false)
+        ;
+      while (digitalRead(SW) == LOW)
+        ;      
+      lcd.setCursor(0, 0);
+      lcd.print("Load LEGO Tray  ");
+    
+      lcd.setCursor(0, 1);
+      lcd.print(" Push Button    ");
+   }      
 }
 
 
