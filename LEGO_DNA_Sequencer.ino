@@ -46,10 +46,37 @@ static int iRotaryEncoder_LastStateCLK;
 static bool bRotaryEncoder_CurrentDirectionClockwise;
 static unsigned long lastButtonPress = 0;
 
+#include <MD5.h>
+
+#define NMB_BAD_WORDS 10
+const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
+{
+{0x84,0xb9,0x06,0x03,0x0d,0x48,0x52,0x7c,0xe0,0x5c,0x36,0x82,0x0f,0x94,0xc9,0xa3},
+{0x01,0x2e,0x3b,0x42,0x29,0xed,0x77,0x78,0x85,0x07,0x44,0xbb,0x32,0x7f,0xa5,0x54},
+{0x71,0xb4,0x74,0xfa,0x0a,0x68,0x85,0x32,0x55,0x2a,0x0a,0x95,0x46,0x4a,0x9a,0x00},
+{0x4f,0x79,0x1f,0x1f,0xc2,0xf1,0xbc,0x1a,0x86,0xab,0xc3,0x8d,0x46,0x78,0x9b,0x34},
+{0x00,0x94,0xcf,0x00,0x63,0x7a,0xee,0x49,0xb2,0x3c,0x4f,0x44,0xba,0xaf,0xe0,0xde},
+{0x4a,0x46,0x6a,0x30,0x2e,0x55,0xdd,0x2e,0x4e,0x8d,0xf6,0xde,0xa7,0xaa,0xc3,0x2f},
+{0xbe,0x97,0x62,0x73,0xca,0x31,0x79,0xad,0x77,0x72,0x63,0xfb,0x26,0xac,0x08,0xd4},
+{0x27,0x50,0xfe,0xdb,0xda,0x13,0x41,0xe9,0x84,0x2b,0xdd,0xb7,0x44,0xc8,0x62,0x03},
+{0xa0,0x15,0x4f,0x58,0xd6,0xa4,0x46,0x1c,0x9d,0x35,0x3d,0x04,0xd6,0x3d,0xb0,0x8b},
+{0xf7,0x3e,0x87,0x12,0x37,0x3e,0xba,0xab,0xa7,0xf8,0xb6,0x91,0xa1,0x92,0x24,0xeb}
+};
+
+/*
+  F("84b906030d48527ce05c36820f94c9a3"),
+  F("012e3b4229ed7778850744bb327fa554"),
+  F("71b474fa0a688532552a0a95464a9a00"),
+  F("4f791f1fc2f1bc1a86abc38d46789b34"),
+  F("0094cf00637aee49b23c4f44baafe0de"),
+  F("4a466a302e55dd2e4e8df6dea7aac32f"),
+  F("be976273ca3179ad777263fb26ac08d4"),
+  F("2750fedbda1341e9842bddb744c86203"),
+  F("a0154f58d6a4461c9d353d04d63db08b"),
+  F("f73e8712373ebaaba7f8b691a19224eb")
+ */
+
 #include <EEPROM.h>
-// EEPROM.write(address, value);
-// EEPROM.commit();
-// EEPROM.read(address);
 
 #define EEPROM_LEGO_SIGNATURE F("LEGO");
 
@@ -60,10 +87,12 @@ static unsigned long lastButtonPress = 0;
 #define EEPROM_NUMBER_OF_LEGO_DNA           4 // 004-004  iNumberOfEEPROM
 #define EEPROM_LEGO_DNA                     5 // 005-004  LEGO_DNAs
 
-#define EEPROM_LEGO_DNA_MAX                18
+//#define EEPROM_LEGO_DNA_MAX                18
+#define EEPROM_LEGO_DNA_MAX                10
 #define EEPROM_LEGO_DNA_ENTRY_SIZE         28
 
-#define LEGO_DNA_MAX  24
+//#define LEGO_DNA_MAX  24
+#define LEGO_DNA_MAX  16
 
 static int iNumberOfEEPROM = 0;
 
@@ -184,7 +213,6 @@ for (int i=0; i<128; i++)
 }
 Serial.println("");
 
-
   if (EEPROM.read(EEPROM_SIGNATURE + 0) == 'L' &&
       EEPROM.read(EEPROM_SIGNATURE + 1) == 'E' &&
       EEPROM.read(EEPROM_SIGNATURE + 2) == 'G' &&
@@ -237,10 +265,10 @@ Serial.println("]");
 
 void SetupEEPROM()
 {
-  EEPROM.write(EEPROM_SIGNATURE + 0, 'L');
-  EEPROM.write(EEPROM_SIGNATURE + 1, 'E');
-  EEPROM.write(EEPROM_SIGNATURE + 2, 'G');
-  EEPROM.write(EEPROM_SIGNATURE + 3, 'O');
+  EEPROM[EEPROM_SIGNATURE + 0] = 'L';
+  EEPROM[EEPROM_SIGNATURE + 1] = 'E';
+  EEPROM[EEPROM_SIGNATURE + 2] = 'G';
+  EEPROM[EEPROM_SIGNATURE + 3] = 'O';
   EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
 
 #if DEBUG_OUTPUT
@@ -335,6 +363,7 @@ void help()
   Serial.println(F("  M Manual Sequencer"));
   Serial.println(F("  A Automated Sequencer"));
   Serial.println(F("  E to Start Sequencer"));
+  Serial.println(F("  Z zero out added DNAs"));
 }
 
 bool GetButtonPressed()
@@ -458,6 +487,14 @@ void loop()
       {
         switch (cBuffer[0])
         {
+          case 'Z':
+            iNumberOfEEPROM = 0;
+            iLEGO_DNA_Number = 6;
+            for (int i=0; i<512; i++)
+              EEPROM[i] = '\0';
+            SetupEEPROM();
+            break;
+            
           case 'E':
             StartSequencer();
             iState = STATE_START;
@@ -698,24 +735,68 @@ void loop()
               Serial.print(sNewName);
               Serial.println(F("]"));
 
-              // Now add to DATABASE
-              int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
-              for (int i = 0; i < 11; i++)
+              // Check for Bad Word
+              bool bBadWord = false;
+              for (int i=0; i<NMB_BAD_WORDS; i++)
               {
-                sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
-                EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
-                iOffset = iOffset + 1;
+                char sQuad[5] = "    ";
+                for (int j=0; j<13; j++)
+                {
+                  int k;
+                  strncpy(sQuad, &sNewName[j], 4);                
+                  //generate the MD5 hash for our string
+                  unsigned char* hash=MD5::make_hash(sQuad);
+                  
+                  for (k=0; k<16; k++)
+                  {
+                    if (hash[k] == ucBadWords[i][k])
+                      continue;
+                    break;
+                  }
+                  if (k == 16)
+                    bBadWord = true;                  
+                  free(hash);
+                  if (bBadWord)
+                    break;
+                }
+                if (bBadWord)
+                  break;
               }
-              for (int i = 0; i < 17; i++)
+              if (bBadWord)
               {
-                sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
-                EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
-                iOffset = iOffset + 1;
+                lcd.setCursor(0, 0);
+                lcd.print("Bad Word in Name");
+                lcd.setCursor(0, 1);
+                lcd.print(" Push Button    ");
+Serial.println("BAD WORD!");                
+                while (GetButtonPressed() == false)
+                  ;
+                while (digitalRead(SW) == LOW)
+                  ;
               }
+              else
+              {
+                // Now add to DATABASE
+                int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
+                for (int i = 0; i <= 11; i++)
+                {
+                  sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
+                  EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
+                  iOffset = iOffset + 1;
+                }
+                iOffset = iOffset - 1;
+                for (int i = 0; i <= 17; i++)
+                {
+                  sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
+                  EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
+                  iOffset = iOffset + 1;
+                }
+  
+                iNumberOfEEPROM = iNumberOfEEPROM + 1;
+                EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
 
-              iNumberOfEEPROM = iNumberOfEEPROM + 1;
-              EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
-
+                iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+              }
             }
           }
         }
