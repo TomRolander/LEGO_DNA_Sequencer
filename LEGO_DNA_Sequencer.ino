@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 /**************************************************************************
   LEGO DNA Sequencer
   Main Program
@@ -53,17 +51,21 @@ static unsigned long lastButtonPress = 0;
 // EEPROM.commit();
 // EEPROM.read(address);
 
+#define EEPROM_LEGO_SIGNATURE F("LEGO");
+
 // EEPROM state variables
 #define EEPROM_SIZE 512
-#define EEPROM_SIGNATURE                    0 // 000-003  Signature 'KISS'
-#define EEPROM_NUMBER_OF_LOOPS              4 // 004-005  iNumberOfLoops
-#define EEPROM_TIME_DELAY_MINUTES           6 // 006-007  iTimeDelayMinutes
-#define EEPROM_VIDEO_RECORD_SECONDS         8 // 008-009  iVideoRecordSeconds
-#define EEPROM_LIGHT_DELAY_BEFORE_SECONDS  10 // 010-011  iLightDelayBeforeSeconds
-#define EEPROM_LIGHT_DELAY_AFTER_SECONDS   12 // 012-013  iLightDelayAfterSeconds
 
-//#define LEGO_DNA_MAX  23
-#define LEGO_DNA_MAX  23
+#define EEPROM_SIGNATURE                    0 // 000-003  Signature 'LEGO'
+#define EEPROM_NUMBER_OF_LEGO_DNA           4 // 004-004  iNumberOfEEPROM
+#define EEPROM_LEGO_DNA                     5 // 005-004  LEGO_DNAs
+
+#define EEPROM_LEGO_DNA_MAX                18
+#define EEPROM_LEGO_DNA_ENTRY_SIZE         28
+
+#define LEGO_DNA_MAX  24
+
+static int iNumberOfEEPROM = 0;
 
 int iLEGO_DNA_Number = 6;
 char sLEGO_DNA_Sequence[LEGO_DNA_MAX][11] =
@@ -169,8 +171,70 @@ void setup() {
 #else
   StartSequencer();
 #endif
+
+  if (EEPROM.read(EEPROM_SIGNATURE + 0) == 'L' &&
+      EEPROM.read(EEPROM_SIGNATURE + 1) == 'E' &&
+      EEPROM.read(EEPROM_SIGNATURE + 2) == 'G' &&
+      EEPROM.read(EEPROM_SIGNATURE + 3) == 'O')
+  {
+    iNumberOfEEPROM = EEPROM[EEPROM_NUMBER_OF_LEGO_DNA];
+
+    int index;
+    int iOffset = EEPROM_LEGO_DNA;
+    for (index = 0; index < iNumberOfEEPROM; index++)
+    {
+      for (int i = 0; i < 11; i++)
+      {
+        sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = EEPROM[EEPROM_LEGO_DNA + iOffset];
+        iOffset = iOffset + 1;
+      }
+      for (int i = 0; i < 17; i++)
+      {
+        sLEGO_DNA_Name[iLEGO_DNA_Number][i] = EEPROM[EEPROM_LEGO_DNA + iOffset];
+        iOffset = iOffset + 1;
+      }
+Serial.println(F("EEPROM Data"));
+Serial.print(F("Index "));
+Serial.print(iLEGO_DNA_Number);
+Serial.print(F(" "));
+Serial.print(sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
+Serial.print(F(" "));
+Serial.print(sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
+Serial.println(" ");
+      
+      iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+    }
+
+  }
+  else
+  {
+#if DEBUG_OUTPUT
+    Serial.println("EEPROM LEGO not found");
+#endif
+    SetupEEPROM();
+  }
+#if DEBUG_OUTPUT
+  Serial.println("EEPROM LEGO found");
+  Serial.print("iNumberOfEEPROM = ");
+  Serial.println(iNumberOfEEPROM);
+#endif
+  //  EEPROM.end();
+
 }
 
+void SetupEEPROM()
+{
+  EEPROM.write(EEPROM_SIGNATURE + 0, 'L');
+  EEPROM.write(EEPROM_SIGNATURE + 1, 'E');
+  EEPROM.write(EEPROM_SIGNATURE + 2, 'G');
+  EEPROM.write(EEPROM_SIGNATURE + 3, 'O');
+  EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
+
+#if DEBUG_OUTPUT
+  Serial.println("EEPROM LEGO initialized");
+#endif
+
+}
 void UpdateLCD(char cColor)
 {
   lcd.print(cColor);
@@ -581,27 +645,65 @@ void loop()
           char sNewName[17] = "";
           char cNextChar;
 
-          for (int i = 0; i < 16; i++)
+          int index;
+          for (index = 0; index < 16; index++)
           {
-            cNextChar = GetNextChar(i);
+            cNextChar = GetNextChar(index);
             if (cNextChar == '\0')
             {
               break;
             }
-            sNewName[i] = cNextChar;
-            sNewName[i + 1] = '\0';
+            sNewName[index] = cNextChar;
+            sNewName[index + 1] = '\0';
           }
+          for (; index < 16; index++)
+          {
+            sNewName[index] = ' ';
+          }
+          sNewName[16] = '\0';
           Serial.println(sNewName);
 
           if (GetYesOrNo(false, sNewName))
           {
-            Serial.print(F("Adding to Database ["));
-            Serial.print(sDNASequence);
-            Serial.print(F("] = ["));
-            Serial.print(sNewName);
-            Serial.println(F("]"));
+            if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
+            {
+              lcd.setCursor(0, 0);
+              lcd.print("EEPROM DB full! ");
+              lcd.setCursor(0, 1);
+              lcd.print(" Push Button    ");
 
-            // Now add to DATABASE
+              while (GetButtonPressed() == false)
+                ;
+              while (digitalRead(SW) == LOW)
+                ;
+            }
+            else
+            {
+              Serial.print(F("Adding to Database ["));
+              Serial.print(sDNASequence);
+              Serial.print(F("] = ["));
+              Serial.print(sNewName);
+              Serial.println(F("]"));
+
+              // Now add to DATABASE
+              int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
+              for (int i = 0; i < 11; i++)
+              {
+                sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
+                EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
+                iOffset = iOffset + 1;
+              }
+              for (int i = 0; i < 17; i++)
+              {
+                sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
+                EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
+                iOffset = iOffset + 1;
+              }
+
+              iNumberOfEEPROM = iNumberOfEEPROM + 1;
+              EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
+
+            }
           }
         }
       }
