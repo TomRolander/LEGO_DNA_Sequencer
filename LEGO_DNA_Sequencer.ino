@@ -77,12 +77,12 @@ char sLEGO_DNA_Sequence[LEGO_DNA_MAX][11] =
   "CGTCTACCAA"
 };
 char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
-{ "  Mako Shark    ",
-  "  Abalone       ",
-  "  Loligo Squid  ",
-  "  Copepod       ",
-  "  Sea Star      ",
-  "  Tuna          "
+{ "  MAKO SHARK    ",
+  "  ABALONE       ",
+  "  SQUID         ",
+  "  COPEPOD       ",
+  "  SEA STAR      ",
+  "  TUNA          "
 };
 
 
@@ -172,6 +172,19 @@ void setup() {
   StartSequencer();
 #endif
 
+for (int i=0; i<128; i++)
+{
+  int iByte = EEPROM.read(i);
+  if (i % 16 == 0)
+    Serial.println("");
+  if (iByte < 16)
+    Serial.print("0");
+  Serial.print(iByte, HEX);
+  Serial.print(" ");
+}
+Serial.println("");
+
+
   if (EEPROM.read(EEPROM_SIGNATURE + 0) == 'L' &&
       EEPROM.read(EEPROM_SIGNATURE + 1) == 'E' &&
       EEPROM.read(EEPROM_SIGNATURE + 2) == 'G' &&
@@ -185,22 +198,22 @@ void setup() {
     {
       for (int i = 0; i < 11; i++)
       {
-        sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = EEPROM[EEPROM_LEGO_DNA + iOffset];
+        sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = EEPROM[iOffset];
         iOffset = iOffset + 1;
       }
       for (int i = 0; i < 17; i++)
       {
-        sLEGO_DNA_Name[iLEGO_DNA_Number][i] = EEPROM[EEPROM_LEGO_DNA + iOffset];
+        sLEGO_DNA_Name[iLEGO_DNA_Number][i] = EEPROM[iOffset];
         iOffset = iOffset + 1;
       }
 Serial.println(F("EEPROM Data"));
 Serial.print(F("Index "));
 Serial.print(iLEGO_DNA_Number);
-Serial.print(F(" "));
-Serial.print(sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
-Serial.print(F(" "));
-Serial.print(sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
-Serial.println(" ");
+Serial.print(F(" ["));
+Serial.print(&sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
+Serial.print(F("] ["));
+Serial.print(&sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
+Serial.println("]");
       
       iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
     }
@@ -561,11 +574,11 @@ void loop()
 
   myStepper.setSpeed(10);
   //myStepper.step((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4));
-#if FLORA
-  myStepper.step(962);
-#else
-  myStepper.step(1237);
-#endif
+//#if FLORA
+//  myStepper.step(962);
+//#else
+  myStepper.step(1260);
+//#endif
   char sDNASequence[11];
   sDNASequence[10] = '\0';
 
@@ -598,11 +611,11 @@ void loop()
 
       myStepper.setSpeed(15);
       //    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
-#if FLORA
-      myStepper.step(-5912);
-#else
-      myStepper.step(-6187);
-#endif
+//#if FLORA
+//      myStepper.step(-5912);
+//#else
+      myStepper.step(-6210);
+//#endif
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
       int index;
