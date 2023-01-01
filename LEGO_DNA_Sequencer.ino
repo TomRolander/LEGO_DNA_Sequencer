@@ -14,7 +14,7 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.2 2022-12-29")
+#define VERSION F("Ver 0.3 2022-12-31")
 
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   1
@@ -573,13 +573,7 @@ void loop()
     {
       while (digitalRead(SW) == LOW)
         ;
-
       iState = STATE_LOAD_TRAY;
-      lcd.setCursor(0, 0);
-      lcd.print("Load LEGO Tray  ");
-
-      lcd.setCursor(0, 1);
-      lcd.print(" Push Button    ");
     }
     else
     {
@@ -589,9 +583,20 @@ void loop()
 
   if (iState == STATE_LOAD_TRAY)
   {
-    //    Serial.println(F("STATE_LOAD_TRAY"));
+    lcd.setCursor(0, 0);
+    lcd.print("Load LEGO Tray  ");
+
+    lcd.setCursor(0, 1);
+    lcd.print(" Push Button    ");
+
     while (GetButtonPressed() == false)
-      ;
+    {
+      if (CheckRotaryEncoder())
+      {
+        bCommandLineMode = true;
+        return;
+      }
+    }
     iState = STATE_SEQUENCING;
   }
   //  Serial.println(F("GetButtonPressed()"));
@@ -801,10 +806,7 @@ Serial.println("BAD WORD!");
           }
         }
       }
-      lcd.setCursor(0, 0);
-      lcd.print("Load LEGO Tray  ");
-      lcd.setCursor(0, 1);
-      lcd.print(" Push Button    ");
+      iState = STATE_LOAD_TRAY;
     }
   }
 
