@@ -303,7 +303,7 @@ char GetLEGOColor()
 
 #if FLORA
 //  if (c >= 350)
-  if (c >= 150)
+  if (c >= 140)
 #else
   if (c > 975 /*200*/)
 #endif
@@ -312,7 +312,12 @@ char GetLEGOColor()
     cRetcode = YELLOW;
     Serial.print(F("C Yellow"));
   }
-  else if (r >= 190) {
+#if FLORA
+  else if (r >= 140) {
+#else    
+  }
+  else if (r >= 180) {
+#endif    
     UpdateLCD(RED);
     cRetcode = RED;
     Serial.print(F("G Red"));
