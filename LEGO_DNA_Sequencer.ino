@@ -149,7 +149,8 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #define INTEGRATION_TIME_DELAY 50
 
 #if  FLORA
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
+//Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 #else
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 #endif
@@ -301,7 +302,8 @@ char GetLEGOColor()
   Serial.print(F("Color: ")); Serial.print(c, DEC); Serial.print(F(" "));
 
 #if FLORA
-  if (c >= 350)
+//  if (c >= 350)
+  if (c >= 150)
 #else
   if (c > 975 /*200*/)
 #endif
