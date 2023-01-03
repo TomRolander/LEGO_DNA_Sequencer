@@ -19,7 +19,7 @@
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   1
 
-#define FLORA 1
+#define FLORA 0
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -329,7 +329,6 @@ char GetLEGOColor()
 #if FLORA
   else if (r >= 140) {
 #else    
-  }
   else if (r >= 180) {
 #endif    
     UpdateLCD(RED);
@@ -356,7 +355,6 @@ char GetLEGOColor()
     cRetcode = BLUE;
     Serial.print(F("T Blue"));
   }
-
   Serial.println(F(""));
 
   return (cRetcode);
