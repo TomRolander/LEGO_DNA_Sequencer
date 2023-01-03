@@ -136,6 +136,23 @@ const int stepsPerRevolution = 2038;
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
 
+#define MAINTENANCE_NMB_OPS           5
+#define MAINTENANCE_OP_CANCEL         0
+#define MAINTENANCE_OP_COMMAND_LINE   1
+#define MAINTENANCE_OP_UNLOAD_TRAY    2
+#define MAINTENANCE_OP_LOAD_TRAY      3
+#define MAINTENANCE_OP_ZERO_EEPROM    4
+
+char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
+{ "  CANCEL        ",
+  "  COMMAND LINE  ",
+  "  UNLOAD TRAY   ",
+  "  LOAD TRAY     ",
+  "  ZERO EEPROM   "
+};
+
+
+
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
 
@@ -148,12 +165,7 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 /* Initialise with specific int time and gain values */
 #define INTEGRATION_TIME_DELAY 50
 
-#if  FLORA
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
-//Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
-#else
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
-#endif
 
 void setup() {
   Serial.begin(115200);
@@ -468,6 +480,7 @@ bool CheckRotaryEncoder()
 
   // Remember last CLK state
   iRotaryEncoder_LastStateCLK = iRotaryEncoder_CurrentStateCLK;
+  delay(10);
   return (bResponse);
 }
 
@@ -600,7 +613,62 @@ void loop()
     {
       if (CheckRotaryEncoder())
       {
-        bCommandLineMode = true;
+        int iCurrentCounter = iRotaryEncoder_Counter;
+        
+        lcd.setCursor(0, 0);
+        lcd.print("Select Option:  ");
+
+        int iMaintenanceOp = MAINTENANCE_OP_CANCEL;
+
+        while (true)
+        {
+          lcd.setCursor(0, 1);
+          lcd.print(sMaintenanceOp[iMaintenanceOp]);
+
+          if (GetButtonPressed())
+            break;
+
+          if (CheckRotaryEncoder())
+          {
+            iMaintenanceOp++;
+            if (iMaintenanceOp  >= MAINTENANCE_NMB_OPS)
+              iMaintenanceOp = MAINTENANCE_OP_CANCEL;
+          }
+        }
+
+        switch (iMaintenanceOp)
+        {
+          case MAINTENANCE_OP_CANCEL:
+Serial.println(F("Cancel"));
+            StartSequencer();
+            iState = STATE_START;
+            bCommandLineMode = false;
+            break;
+
+          case MAINTENANCE_OP_COMMAND_LINE:
+Serial.println(F("Enter Command Line Mode"));
+            bCommandLineMode = true;
+            break;
+
+          case MAINTENANCE_OP_UNLOAD_TRAY:
+Serial.println(F("Unload Tray"));
+            myStepper.step(-7000);
+            break;
+            
+          case MAINTENANCE_OP_LOAD_TRAY:
+Serial.println(F("Load Tray"));
+            myStepper.step(740);
+            break;
+        
+          case MAINTENANCE_OP_ZERO_EEPROM:
+            iNumberOfEEPROM = 0;
+            iLEGO_DNA_Number = 6;
+            for (int i=0; i<512; i++)
+              EEPROM[i] = '\0';
+            SetupEEPROM();
+            break;
+         }
+        
         return;
       }
     }
