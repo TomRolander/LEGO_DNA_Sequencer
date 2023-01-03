@@ -21,7 +21,7 @@
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
 
-#define FLORA 0
+#define FLORA 1
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
