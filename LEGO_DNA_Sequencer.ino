@@ -136,18 +136,20 @@ const int stepsPerRevolution = 2038;
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
 
-#define MAINTENANCE_NMB_OPS           5
+#define MAINTENANCE_NMB_OPS           6
 #define MAINTENANCE_OP_CANCEL         0
 #define MAINTENANCE_OP_COMMAND_LINE   1
 #define MAINTENANCE_OP_UNLOAD_TRAY    2
 #define MAINTENANCE_OP_LOAD_TRAY      3
-#define MAINTENANCE_OP_ZERO_EEPROM    4
+#define MAINTENANCE_OP_POSITION_TRAY  4
+#define MAINTENANCE_OP_ZERO_EEPROM    5
 
 char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
 { "  CANCEL        ",
   "  COMMAND LINE  ",
   "  UNLOAD TRAY   ",
   "  LOAD TRAY     ",
+  "  POSITION TRAY ",
   "  ZERO EEPROM   "
 };
 
@@ -391,7 +393,8 @@ bool GetButtonPressed()
   int btnState = digitalRead(SW);
 
   //If we detect LOW signal, button is pressed
-  if (btnState == LOW) {
+  if (btnState == LOW) 
+  {
     //if 50ms have passed since last LOW pulse, it means that the
     //button has been pressed, released and pressed again
     if (millis() - lastButtonPress > 50) {
@@ -399,6 +402,10 @@ bool GetButtonPressed()
       //      lcd.print("Button pressed! ");
     }
 
+    // Wait for button to be released
+    while (digitalRead(SW) == LOW)
+      ;
+      
     // Remember last button press event
     lastButtonPress = millis();
     return (true);
@@ -591,8 +598,8 @@ void loop()
   {
     if (GetButtonPressed())
     {
-      while (digitalRead(SW) == LOW)
-        ;
+//      while (digitalRead(SW) == LOW)
+//        ;
       iState = STATE_LOAD_TRAY;
     }
     else
@@ -659,6 +666,28 @@ Serial.println(F("Unload Tray"));
 Serial.println(F("Load Tray"));
             myStepper.step(740);
             break;
+
+          case MAINTENANCE_OP_POSITION_TRAY:
+            {
+             int iCounter = iRotaryEncoder_Counter;
+              while (GetButtonPressed() == false)
+              {
+                if (CheckRotaryEncoder())
+                {
+Serial.print("iCounter = ");
+Serial.print(iCounter);
+Serial.print("  iRotaryEncoder_Counter = ");
+Serial.println(iRotaryEncoder_Counter);
+                  
+                  if (iRotaryEncoder_Counter > iCounter)
+                    myStepper.step(50);
+                  else
+                    myStepper.step(-50);
+                  iCounter = iRotaryEncoder_Counter;
+                }
+              }              
+            }
+            break;
         
           case MAINTENANCE_OP_ZERO_EEPROM:
             iNumberOfEEPROM = 0;
@@ -674,7 +703,6 @@ Serial.println(F("Load Tray"));
     }
     iState = STATE_SEQUENCING;
   }
-  //  Serial.println(F("GetButtonPressed()"));
 
   lcd.setCursor(0, 0);
   lcd.print("Sequencing DNA  ");
@@ -759,8 +787,8 @@ Serial.println(F("Load Tray"));
 
       while (GetButtonPressed() == false)
         ;
-      while (digitalRead(SW) == LOW)
-        ;
+//      while (digitalRead(SW) == LOW)
+//        ;
 
       if (index >= iLEGO_DNA_Number)
       {
@@ -804,8 +832,8 @@ Serial.println(F("Load Tray"));
 
               while (GetButtonPressed() == false)
                 ;
-              while (digitalRead(SW) == LOW)
-                ;
+//              while (digitalRead(SW) == LOW)
+//                ;
             }
             else
             {
@@ -851,8 +879,8 @@ Serial.println(F("Load Tray"));
 Serial.println("BAD WORD!");                
                 while (GetButtonPressed() == false)
                   ;
-                while (digitalRead(SW) == LOW)
-                  ;
+//                while (digitalRead(SW) == LOW)
+//                  ;
               }
               else
               {
@@ -926,8 +954,8 @@ char GetNextChar(int index)
       }
     }
   }
-  while (digitalRead(SW) == LOW)
-    ;
+//  while (digitalRead(SW) == LOW)
+//    ;
   if (cCurrentChar == '@')
     cCurrentChar = '\0';
   return (cCurrentChar);
