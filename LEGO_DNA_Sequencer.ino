@@ -14,10 +14,12 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.3 2022-12-31")
+#define VERSION F("Ver 0.4 2023-01-03")
+#define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
+#define VERSION_SHORT F("Ver 0.4 01-03-23")
 
 #define DEBUG_OUTPUT 1
-#define DEBUG_MODE   1
+#define DEBUG_MODE   0
 
 #define FLORA 0
 
@@ -136,13 +138,14 @@ const int stepsPerRevolution = 2038;
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
 
-#define MAINTENANCE_NMB_OPS           6
+#define MAINTENANCE_NMB_OPS           7
 #define MAINTENANCE_OP_CANCEL         0
 #define MAINTENANCE_OP_COMMAND_LINE   1
 #define MAINTENANCE_OP_UNLOAD_TRAY    2
 #define MAINTENANCE_OP_LOAD_TRAY      3
 #define MAINTENANCE_OP_POSITION_TRAY  4
 #define MAINTENANCE_OP_ZERO_EEPROM    5
+#define MAINTENANCE_OP_VERSION_INFO   6
 
 char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
 { "  CANCEL        ",
@@ -150,7 +153,8 @@ char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
   "  UNLOAD TRAY   ",
   "  LOAD TRAY     ",
   "  POSITION TRAY ",
-  "  ZERO EEPROM   "
+  "  ZERO EEPROM   ",
+  "  VERSION INFO  "
 };
 
 
@@ -617,9 +621,7 @@ void loop()
     while (GetButtonPressed() == false)
     {
       if (CheckRotaryEncoder())
-      {
-        int iCurrentCounter = iRotaryEncoder_Counter;
-        
+      {        
         lcd.setCursor(0, 0);
         lcd.print("Select Option:  ");
 
@@ -633,11 +635,21 @@ void loop()
           if (GetButtonPressed())
             break;
 
+          int iCounter = iRotaryEncoder_Counter;
           if (CheckRotaryEncoder())
           {
-            iMaintenanceOp++;
-            if (iMaintenanceOp  >= MAINTENANCE_NMB_OPS)
-              iMaintenanceOp = MAINTENANCE_OP_CANCEL;
+            if (iRotaryEncoder_Counter > iCounter)
+            {
+              iMaintenanceOp++;
+              if (iMaintenanceOp  >= MAINTENANCE_NMB_OPS)
+                iMaintenanceOp = MAINTENANCE_OP_CANCEL;
+            }
+            else
+            {
+              iMaintenanceOp--;
+              if (iMaintenanceOp < 0)
+                iMaintenanceOp = MAINTENANCE_OP_VERSION_INFO;
+            }
           }
         }
 
@@ -672,11 +684,12 @@ Serial.println(F("Load Tray"));
               {
                 if (CheckRotaryEncoder())
                 {
+#if DEBUG_OUTPUT                
 Serial.print("iCounter = ");
 Serial.print(iCounter);
 Serial.print("  iRotaryEncoder_Counter = ");
 Serial.println(iRotaryEncoder_Counter);
-                  
+#endif                  
                   if (iRotaryEncoder_Counter > iCounter)
                     myStepper.step(50);
                   else
@@ -693,6 +706,18 @@ Serial.println(iRotaryEncoder_Counter);
             for (int i=0; i<512; i++)
               EEPROM[i] = '\0';
             SetupEEPROM();
+            break;
+
+          case MAINTENANCE_OP_VERSION_INFO:
+            lcd.setCursor(0, 0);
+            lcd.print(PROGRAM_SHORT);            
+            lcd.setCursor(0, 1);
+            lcd.print(VERSION_SHORT);
+            while (GetButtonPressed() == false &&
+                   CheckRotaryEncoder() == false)
+            {
+              delay(100);
+            }
             break;
          }
         
