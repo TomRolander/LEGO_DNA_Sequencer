@@ -33,7 +33,9 @@ static bool bAutomated = true;
 
 #define STEPS_PER_LEGO_BLOCK  550
 
-#define LED_TCS34725  A0
+#define BUZZER        A0
+
+#define LED_TCS34725  A3
 
 static bool bCommandLineMode = false;
 
@@ -138,14 +140,16 @@ const int stepsPerRevolution = 2038;
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
 
-#define MAINTENANCE_NMB_OPS           7
+#define MAINTENANCE_NMB_OPS           9
 #define MAINTENANCE_OP_CANCEL         0
 #define MAINTENANCE_OP_COMMAND_LINE   1
 #define MAINTENANCE_OP_UNLOAD_TRAY    2
 #define MAINTENANCE_OP_LOAD_TRAY      3
 #define MAINTENANCE_OP_POSITION_TRAY  4
 #define MAINTENANCE_OP_ZERO_EEPROM    5
-#define MAINTENANCE_OP_VERSION_INFO   6
+#define MAINTENANCE_OP_BUZZER_OFF     6
+#define MAINTENANCE_OP_BUZZER_ON      7
+#define MAINTENANCE_OP_VERSION_INFO   8
 
 char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
 { "  CANCEL        ",
@@ -154,10 +158,12 @@ char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
   "  LOAD TRAY     ",
   "  POSITION TRAY ",
   "  ZERO EEPROM   ",
+  "  BUZZER OFF    ",
+  "  BUZZER ON     ",
   "  VERSION INFO  "
 };
 
-
+static bool bBuzzer = true;
 
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
@@ -179,6 +185,8 @@ void setup() {
   Serial.println();
   Serial.println(PROGRAM);
   Serial.println(VERSION);
+
+  pinMode(BUZZER, OUTPUT); //initialize the buzzer pin as an output
 
   // Set encoder pins as inputs
   pinMode(CLK, INPUT);
@@ -213,9 +221,9 @@ void setup() {
 #if DEBUG_MODE
   bCommandLineMode = true;
   lcd.setCursor(0, 0);
-  lcd.print("LEGO DNA Sqncr  ");
+  lcd.print(F("LEGO DNA Sqncr  "));
   lcd.setCursor(0, 1);
-  lcd.print("Debugger Console");
+  lcd.print(F("Debugger Console"));
 #else
   StartSequencer();
 #endif
@@ -226,9 +234,9 @@ for (int i=0; i<128; i++)
   if (i % 16 == 0)
     Serial.println("");
   if (iByte < 16)
-    Serial.print("0");
+    Serial.print(F("0"));
   Serial.print(iByte, HEX);
-  Serial.print(" ");
+  Serial.print(F(" "));
 }
 Serial.println("");
 
@@ -260,7 +268,7 @@ Serial.print(F(" ["));
 Serial.print(&sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
 Serial.print(F("] ["));
 Serial.print(&sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
-Serial.println("]");
+Serial.println(F("]"));
       
       iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
     }
@@ -269,13 +277,13 @@ Serial.println("]");
   else
   {
 #if DEBUG_OUTPUT
-    Serial.println("EEPROM LEGO not found");
+    Serial.println(F("EEPROM LEGO not found"));
 #endif
     SetupEEPROM();
   }
 #if DEBUG_OUTPUT
-  Serial.println("EEPROM LEGO found");
-  Serial.print("iNumberOfEEPROM = ");
+  Serial.println(F("EEPROM LEGO found"));
+  Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
 #endif
   //  EEPROM.end();
@@ -291,7 +299,7 @@ void SetupEEPROM()
   EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
 
 #if DEBUG_OUTPUT
-  Serial.println("EEPROM LEGO initialized");
+  Serial.println(F("EEPROM LEGO initialized"));
 #endif
 
 }
@@ -367,10 +375,10 @@ char GetLEGOColor()
 void StartSequencer()
 {
   lcd.setCursor(0, 0);
-  lcd.print("LEGO DNA Sqncr  ");
+  lcd.print(F("LEGO DNA Sqncr  "));
 
   lcd.setCursor(0, 1);
-  lcd.print(" Push Button    ");
+  lcd.print(F(" Push Button    "));
 }
 
 void help()
@@ -420,14 +428,14 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
   bool bResponse = bInitialResponse;
 
   lcd.setCursor(0, 0);
-  lcd.print("                ");
+  lcd.print(F("                "));
   lcd.setCursor(0, 0);
   lcd.print(sQuestion);
   lcd.setCursor(0, 1);
   if (bInitialResponse == false)
-    lcd.print("[NO]  YES       ");
+    lcd.print(F("[NO]  YES       "));
   else
-    lcd.print(" NO  [YES]      ");
+    lcd.print(F(" NO  [YES]      "));
 
   while (GetButtonPressed() == false)
   {
@@ -439,7 +447,7 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
         if (bResponse != false)
         {
           lcd.setCursor(0, 1);
-          lcd.print("[NO]  YES       ");
+          lcd.print(F("[NO]  YES       "));
         }
         bResponse = false;
       }
@@ -448,7 +456,7 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
         if (bResponse != true)
         {
           lcd.setCursor(0, 1);
-          lcd.print(" NO  [YES]      ");
+          lcd.print(F(" NO  [YES]      "));
         }
         bResponse = true;
       }
@@ -613,17 +621,19 @@ void loop()
   if (iState == STATE_LOAD_TRAY)
   {
     lcd.setCursor(0, 0);
-    lcd.print("Load LEGO Tray  ");
+    lcd.print(F("Load LEGO Tray  "));
+
+    Beeps(1, 50, 0);  // 1 Beep, 50MS ON, 0MS OFF    
 
     lcd.setCursor(0, 1);
-    lcd.print(" Push Button    ");
+    lcd.print(F(" Push Button    "));
 
     while (GetButtonPressed() == false)
     {
       if (CheckRotaryEncoder())
       {        
         lcd.setCursor(0, 0);
-        lcd.print("Select Option:  ");
+        lcd.print(F("Select Option:  "));
 
         int iMaintenanceOp = MAINTENANCE_OP_CANCEL;
 
@@ -685,9 +695,9 @@ Serial.println(F("Load Tray"));
                 if (CheckRotaryEncoder())
                 {
 #if DEBUG_OUTPUT                
-Serial.print("iCounter = ");
+Serial.print(F("iCounter = "));
 Serial.print(iCounter);
-Serial.print("  iRotaryEncoder_Counter = ");
+Serial.print(F("  iRotaryEncoder_Counter = "));
 Serial.println(iRotaryEncoder_Counter);
 #endif                  
                   if (iRotaryEncoder_Counter > iCounter)
@@ -706,6 +716,14 @@ Serial.println(iRotaryEncoder_Counter);
             for (int i=0; i<512; i++)
               EEPROM[i] = '\0';
             SetupEEPROM();
+            break;
+
+          case MAINTENANCE_OP_BUZZER_ON:
+            bBuzzer = true;
+            break;
+
+          case MAINTENANCE_OP_BUZZER_OFF:
+            bBuzzer = false;
             break;
 
           case MAINTENANCE_OP_VERSION_INFO:
@@ -728,10 +746,10 @@ Serial.println(iRotaryEncoder_Counter);
   }
 
   lcd.setCursor(0, 0);
-  lcd.print("Sequencing DNA  ");
+  lcd.print(F("Sequencing DNA  "));
 
   lcd.setCursor(0, 1);
-  lcd.print("                ");
+  lcd.print(F("                "));
 
   lcd.setCursor(0, 1);
 
@@ -755,10 +773,10 @@ Serial.println(iRotaryEncoder_Counter);
     if (bAutomated == false)
     {
       lcd.setCursor(0, 0);
-      lcd.print("Position LEGO # ");
+      lcd.print(F("Position LEGO # "));
       lcd.print(i);
       lcd.setCursor(0, 1);
-      lcd.print(" Push Button    ");
+      lcd.print(F(" Push Button    "));
 
       while (GetButtonPressed() == false)
         ;
@@ -775,7 +793,9 @@ Serial.println(iRotaryEncoder_Counter);
       digitalWrite (LED_TCS34725, LOW);
 
       lcd.setCursor(0, 0);
-      lcd.print("Unloading tray  ");
+      lcd.print(F("Unloading tray  "));
+
+      Beeps(2, 50, 250);  // 2 Beeps, 50MS ON, 250MS OFF
 
       myStepper.setSpeed(15);
       //    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
@@ -796,16 +816,20 @@ Serial.println(iRotaryEncoder_Counter);
       if (index < iLEGO_DNA_Number)
       {
         lcd.setCursor(0, 0);
-        lcd.print("Successful match");
+        lcd.print(F("Successful match"));
         lcd.setCursor(0, 1);
         lcd.print(sLEGO_DNA_Name[index]);
+        
+        Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
       }
       else
       {
         lcd.setCursor(0, 0);
-        lcd.print("DNA not a match ");
+        lcd.print(F("DNA not a match "));
         lcd.setCursor(0, 1);
-        lcd.print(" U N K N O W N  ");
+        lcd.print(F(" U N K N O W N  "));
+
+        Beeps(3, 100, 200);  // 3 Beeps, 100MS ON, 200MS OFF
       }
 
       while (GetButtonPressed() == false)
@@ -819,9 +843,9 @@ Serial.println(iRotaryEncoder_Counter);
         {
           Serial.println(F("Add to Database!"));
           lcd.setCursor(0, 0);
-          lcd.print("Enter Name      ");
+          lcd.print(F("Enter Name      "));
           lcd.setCursor(0, 1);
-          lcd.print("                ");
+          lcd.print(F("                "));
 
           char sNewName[17] = "";
           char cNextChar;
@@ -849,9 +873,9 @@ Serial.println(iRotaryEncoder_Counter);
             if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
             {
               lcd.setCursor(0, 0);
-              lcd.print("EEPROM DB full! ");
+              lcd.print(F("EEPROM DB full! "));
               lcd.setCursor(0, 1);
-              lcd.print(" Push Button    ");
+              lcd.print(F(" Push Button    "));
 
               while (GetButtonPressed() == false)
                 ;
@@ -896,10 +920,10 @@ Serial.println(iRotaryEncoder_Counter);
               if (bBadWord)
               {
                 lcd.setCursor(0, 0);
-                lcd.print("Bad Word in Name");
+                lcd.print(F("Bad Word in Name"));
                 lcd.setCursor(0, 1);
-                lcd.print(" Push Button    ");
-Serial.println("BAD WORD!");                
+                lcd.print(F(" Push Button    "));
+Serial.println(F("BAD WORD!"));                
                 while (GetButtonPressed() == false)
                   ;
 //                while (digitalRead(SW) == LOW)
@@ -982,4 +1006,18 @@ char GetNextChar(int index)
   if (cCurrentChar == '@')
     cCurrentChar = '\0';
   return (cCurrentChar);
+}
+
+void Beeps(int iNmbBeeps, int iMSLengthON, int iMSLengthOFF)
+{
+  if (bBuzzer == false)
+    return;
+
+  for (int i=0; i<iNmbBeeps; i++)
+  {
+    digitalWrite(BUZZER, HIGH);
+    delay(iMSLengthON);//wait for 1ms
+    digitalWrite(BUZZER, LOW);
+    delay(iMSLengthOFF);//wait for 1ms    
+  }
 }
