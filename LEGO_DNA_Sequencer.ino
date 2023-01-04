@@ -14,9 +14,9 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.4 2023-01-03")
+#define VERSION F("Ver 0.9 2023-01-04")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.4 01-03-23")
+#define VERSION_SHORT F("Ver 0.9 01-04-23")
 
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
@@ -30,8 +30,6 @@
 static int iState = STATE_START;
 
 static bool bAutomated = true;
-
-#define STEPS_PER_LEGO_BLOCK  550
 
 #define BUZZER        A0
 
@@ -49,6 +47,11 @@ static int iRotaryEncoder_CurrentStateCLK;
 static int iRotaryEncoder_LastStateCLK;
 static bool bRotaryEncoder_CurrentDirectionClockwise;
 static unsigned long lastButtonPress = 0;
+
+char sNameChars[40] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 <\xff";
+//                     0123456789012345678901234567890123456789
+//                     0         1         2         3
+#define NMB_NAME_CHARS  39
 
 #include <MD5.h>
 
@@ -286,8 +289,6 @@ Serial.println(F("]"));
   Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
 #endif
-  //  EEPROM.end();
-
 }
 
 void SetupEEPROM()
@@ -786,7 +787,10 @@ Serial.println(iRotaryEncoder_Counter);
     sDNASequence[i] = GetLEGOColor();
 
     if (i < 9)
+    {
+      Beeps(1, 1, 0);   // 1 Beep, 1MS ON, 0MS OFF
       myStepper.step(STEPS_PER_LEGO_BLOCK);
+    }
     else
     {
       tcs.setInterrupt(true);
@@ -829,7 +833,7 @@ Serial.println(iRotaryEncoder_Counter);
         lcd.setCursor(0, 1);
         lcd.print(F(" U N K N O W N  "));
 
-        Beeps(3, 100, 200);  // 3 Beeps, 100MS ON, 200MS OFF
+        Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF
       }
 
       while (GetButtonPressed() == false)
@@ -843,23 +847,36 @@ Serial.println(iRotaryEncoder_Counter);
         {
           Serial.println(F("Add to Database!"));
           lcd.setCursor(0, 0);
-          lcd.print(F("Enter Name      "));
+          lcd.print(F("Name:  "));
+          lcd.write((byte) 0xff);
+          lcd.print(F(" to end "));
           lcd.setCursor(0, 1);
           lcd.print(F("                "));
 
           char sNewName[17] = "";
           char cNextChar;
 
-          int index;
-          for (index = 0; index < 16; index++)
+          int index = 0;
+          while (index < 16)
           {
             cNextChar = GetNextChar(index);
             if (cNextChar == '\0')
             {
               break;
             }
+            if (cNextChar == '<')
+            {
+              if (index > 0)
+              {
+                lcd.setCursor(index, 1);
+                lcd.print(' ');
+                index = index - 1;
+                continue;
+              }
+            }
             sNewName[index] = cNextChar;
-            sNewName[index + 1] = '\0';
+            index = index + 1;
+            sNewName[index] = '\0';
           }
           for (; index < 16; index++)
           {
@@ -868,6 +885,7 @@ Serial.println(iRotaryEncoder_Counter);
           sNewName[16] = '\0';
           Serial.println(sNewName);
 
+          if (strcmp(sNewName, "                ") != 0)
           if (GetYesOrNo(false, sNewName))
           {
             if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
@@ -879,8 +897,6 @@ Serial.println(iRotaryEncoder_Counter);
 
               while (GetButtonPressed() == false)
                 ;
-//              while (digitalRead(SW) == LOW)
-//                ;
             }
             else
             {
@@ -964,10 +980,12 @@ Serial.println(F("BAD WORD!"));
 
 char GetNextChar(int index)
 {
-  lcd.setCursor(index, 1);
-  lcd.print('_');
+  int iCurrentCharIndex = NMB_NAME_CHARS-1;
+  char cCurrentChar = sNameChars[NMB_NAME_CHARS-1];
 
-  char cCurrentChar = '@';
+  lcd.setCursor(index, 1);
+  lcd.print(cCurrentChar);
+
   int iCurrentCounter = iRotaryEncoder_Counter;
   while (GetButtonPressed() == false)
   {
@@ -977,33 +995,24 @@ char GetNextChar(int index)
       {
         if (iRotaryEncoder_Counter > iCurrentCounter)
         {
-          if (cCurrentChar >= 'Z')
-          {
-            cCurrentChar = '?';
-          }
-          cCurrentChar = cCurrentChar + (iRotaryEncoder_Counter - iCurrentCounter);
-          if (cCurrentChar > 'Z')
-            cCurrentChar = '@';
+          iCurrentCharIndex = iCurrentCharIndex + (iRotaryEncoder_Counter - iCurrentCounter);
+          if (iCurrentCharIndex >= NMB_NAME_CHARS)
+            iCurrentCharIndex = 0;
         }
         else
         {
-          if (cCurrentChar <= '@')
-          {
-            cCurrentChar = '[';
-          }
-          cCurrentChar = cCurrentChar - (iCurrentCounter - iRotaryEncoder_Counter);
-          if (cCurrentChar < '@')
-            cCurrentChar = 'Z';
+          iCurrentCharIndex = iCurrentCharIndex - (iCurrentCounter - iRotaryEncoder_Counter);
+          if (iCurrentCharIndex < 0)
+            iCurrentCharIndex = NMB_NAME_CHARS-1;
         }
         lcd.setCursor(index, 1);
+        cCurrentChar = sNameChars[iCurrentCharIndex];
         lcd.print(cCurrentChar);
         iCurrentCounter = iRotaryEncoder_Counter;
       }
     }
   }
-//  while (digitalRead(SW) == LOW)
-//    ;
-  if (cCurrentChar == '@')
+  if (cCurrentChar == '\xff')
     cCurrentChar = '\0';
   return (cCurrentChar);
 }
@@ -1021,3 +1030,48 @@ void Beeps(int iNmbBeeps, int iMSLengthON, int iMSLengthOFF)
     delay(iMSLengthOFF);//wait for 1ms    
   }
 }
+
+#if 0
+void TestNameEntry()
+{
+   Serial.println(F("Add to Database!"));
+  lcd.setCursor(0, 0);
+  lcd.print(F("Name:  "));
+  lcd.write((byte) 0xff);
+  lcd.print(F(" to end "));
+  lcd.setCursor(0, 1);
+  lcd.print(F("                "));
+
+  char sNewName[17] = "";
+  char cNextChar;
+
+  int index = 0;
+  while (index < 16)
+  {
+    cNextChar = GetNextChar(index);
+    if (cNextChar == '\0')
+    {
+      break;
+    }
+    if (cNextChar == '<')
+    {
+      if (index > 0)
+      {
+        lcd.setCursor(index, 1);
+        lcd.print(' ');
+        index = index - 1;
+        continue;
+      }
+    }
+    sNewName[index] = cNextChar;
+    index = index + 1;
+    sNewName[index] = '\0';
+  }
+  for (; index < 16; index++)
+  {
+    sNewName[index] = ' ';
+  }
+  sNewName[16] = '\0';
+  Serial.println(sNewName);
+}
+#endif
