@@ -14,9 +14,9 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-01-04")
+#define VERSION F("Ver 0.9 2023-01-05")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 01-04-23")
+#define VERSION_SHORT F("Ver 0.9 01-05-23")
 
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
@@ -103,9 +103,10 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 
 static int iNumberOfEEPROM = 0;
 
-int iLEGO_DNA_Number = 6;
+int iLEGO_DNA_Number = 7;
 char sLEGO_DNA_Sequence[LEGO_DNA_MAX][11] =
-{ "ATTGGTCATT",
+{ "ACGTACGTAC",
+  "ATTGGTCATT",
   "TGCTCCTACA",
   "CACAATCTAC",
   "GCTCCCGGGT",
@@ -113,7 +114,8 @@ char sLEGO_DNA_Sequence[LEGO_DNA_MAX][11] =
   "CGTCTACCAA"
 };
 char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
-{ "  MAKO SHARK    ",
+{ " ACGTACGTAC TEST",
+  "  MAKO SHARK    ",
   "  ABALONE       ",
   "  SQUID         ",
   "  COPEPOD       ",
@@ -332,7 +334,7 @@ char GetLEGOColor()
 //  if (c >= 350)
   if (c >= 140)
 #else
-  if (c > 975 /*200*/)
+  if (c > 900 /*200*/)
 #endif
   {
     UpdateLCD(YELLOW);
@@ -340,7 +342,7 @@ char GetLEGOColor()
     Serial.print(F("C Yellow"));
   }
 #if FLORA
-  else if (r >= 140) {
+  else if (r >= 130) {
 #else    
   else if (r >= 180) {
 #endif    
@@ -680,12 +682,12 @@ Serial.println(F("Enter Command Line Mode"));
 
           case MAINTENANCE_OP_UNLOAD_TRAY:
 Serial.println(F("Unload Tray"));
-            myStepper.step(-7000);
+            myStepper.step(-4000);
             break;
             
           case MAINTENANCE_OP_LOAD_TRAY:
 Serial.println(F("Load Tray"));
-            myStepper.step(740);
+            myStepper.step(1640);
             break;
 
           case MAINTENANCE_OP_POSITION_TRAY:
@@ -761,13 +763,13 @@ Serial.println(iRotaryEncoder_Counter);
 
   myStepper.setSpeed(10);
   //myStepper.step((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4));
-//#if FLORA
-//  myStepper.step(962);
-//#else
-  myStepper.step(1260);
-//#endif
+//  myStepper.step(1260);
+  myStepper.step(460);
+  
   char sDNASequence[11];
   sDNASequence[10] = '\0';
+
+  Serial.println("");
 
   for (int i = 0; i < 10; i++)
   {
@@ -802,171 +804,184 @@ Serial.println(iRotaryEncoder_Counter);
       Beeps(2, 50, 250);  // 2 Beeps, 50MS ON, 250MS OFF
 
       myStepper.setSpeed(15);
-      //    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
-//#if FLORA
-//      myStepper.step(-5912);
-//#else
-      myStepper.step(-6210);
-//#endif
+//    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
+//      myStepper.step(-6210);
+      myStepper.step(-5410);
+      
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
-      int index;
-      for (index = 0; index < iLEGO_DNA_Number; index++)
-      {
-        if (strcmp(sDNASequence, sLEGO_DNA_Sequence[index]) == 0)
-          break;
-      }
 
-      if (index < iLEGO_DNA_Number)
+      if ((strcmp(sDNASequence, "AAAAAAAAAA") == 0) ||
+          (strcmp(sDNASequence, "CCCCCCCCCC") == 0) ||
+          (strcmp(sDNASequence, "GGGGGGGGGG") == 0) ||
+          (strcmp(sDNASequence, "TTTTTTTTTT") == 0))
       {
         lcd.setCursor(0, 0);
-        lcd.print(F("Successful match"));
+        lcd.print(F("EMPTY TRAY ERROR"));
         lcd.setCursor(0, 1);
-        lcd.print(sLEGO_DNA_Name[index]);
+        lcd.print(F("  PUSH BUTTON   "));
+
+        Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF        
         
-        Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
+        while (GetButtonPressed() == false)
+          ;
       }
       else
       {
-        lcd.setCursor(0, 0);
-        lcd.print(F("DNA not a match "));
-        lcd.setCursor(0, 1);
-        lcd.print(F(" U N K N O W N  "));
-
-        Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF
-      }
-
-      while (GetButtonPressed() == false)
-        ;
-//      while (digitalRead(SW) == LOW)
-//        ;
-
-      if (index >= iLEGO_DNA_Number)
-      {
-        if (GetYesOrNo(false, "Add to Database?"))
+        int index;
+        for (index = 0; index < iLEGO_DNA_Number; index++)
         {
-          Serial.println(F("Add to Database!"));
+          if (strcmp(sDNASequence, sLEGO_DNA_Sequence[index]) == 0)
+            break;
+        }
+  
+        if (index < iLEGO_DNA_Number)
+        {
           lcd.setCursor(0, 0);
-          lcd.print(F("Name:  "));
-          lcd.write((byte) 0xff);
-          lcd.print(F(" to end "));
+          lcd.print(F("Successful match"));
           lcd.setCursor(0, 1);
-          lcd.print(F("                "));
-
-          char sNewName[17] = "";
-          char cNextChar;
-
-          int index = 0;
-          while (index < 16)
+          lcd.print(sLEGO_DNA_Name[index]);
+          
+          Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
+        }
+        else
+        {
+          lcd.setCursor(0, 0);
+          lcd.print(F("DNA not a match "));
+          lcd.setCursor(0, 1);
+          lcd.print(F(" U N K N O W N  "));
+  
+          Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF
+        }
+      
+        while (GetButtonPressed() == false)
+          ;
+  
+        if (index >= iLEGO_DNA_Number)
+        {
+          if (GetYesOrNo(false, "Add to Database?"))
           {
-            cNextChar = GetNextChar(index);
-            if (cNextChar == '\0')
+            Serial.println(F("Add to Database!"));
+            lcd.setCursor(0, 0);
+            lcd.print(F("Name:  "));
+            lcd.write((byte) 0xff);
+            lcd.print(F(" to end "));
+            lcd.setCursor(0, 1);
+            lcd.print(F("                "));
+  
+            char sNewName[17] = "";
+            char cNextChar;
+  
+            int index = 0;
+            while (index < 16)
             {
-              break;
-            }
-            if (cNextChar == '<')
-            {
-              if (index > 0)
+              cNextChar = GetNextChar(index);
+              if (cNextChar == '\0')
               {
-                lcd.setCursor(index, 1);
-                lcd.print(' ');
-                index = index - 1;
-                continue;
+                break;
               }
-            }
-            sNewName[index] = cNextChar;
-            index = index + 1;
-            sNewName[index] = '\0';
-          }
-          for (; index < 16; index++)
-          {
-            sNewName[index] = ' ';
-          }
-          sNewName[16] = '\0';
-          Serial.println(sNewName);
-
-          if (strcmp(sNewName, "                ") != 0)
-          if (GetYesOrNo(false, sNewName))
-          {
-            if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
-            {
-              lcd.setCursor(0, 0);
-              lcd.print(F("EEPROM DB full! "));
-              lcd.setCursor(0, 1);
-              lcd.print(F(" Push Button    "));
-
-              while (GetButtonPressed() == false)
-                ;
-            }
-            else
-            {
-              Serial.print(F("Adding to Database ["));
-              Serial.print(sDNASequence);
-              Serial.print(F("] = ["));
-              Serial.print(sNewName);
-              Serial.println(F("]"));
-
-              // Check for Bad Word
-              bool bBadWord = false;
-              for (int i=0; i<NMB_BAD_WORDS; i++)
+              if (cNextChar == '<')
               {
-                char sQuad[5] = "    ";
-                for (int j=0; j<13; j++)
+                if (index > 0)
                 {
-                  int k;
-                  strncpy(sQuad, &sNewName[j], 4);                
-                  //generate the MD5 hash for our string
-                  unsigned char* hash=MD5::make_hash(sQuad);
-                  
-                  for (k=0; k<16; k++)
+                  lcd.setCursor(index, 1);
+                  lcd.print(' ');
+                  index = index - 1;
+                  continue;
+                }
+              }
+              sNewName[index] = cNextChar;
+              index = index + 1;
+              sNewName[index] = '\0';
+            }
+            for (; index < 16; index++)
+            {
+              sNewName[index] = ' ';
+            }
+            sNewName[16] = '\0';
+            Serial.println(sNewName);
+  
+            if (strcmp(sNewName, "                ") != 0)
+            if (GetYesOrNo(false, sNewName))
+            {
+              if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
+              {
+                lcd.setCursor(0, 0);
+                lcd.print(F("EEPROM DB full! "));
+                lcd.setCursor(0, 1);
+                lcd.print(F(" Push Button    "));
+  
+                while (GetButtonPressed() == false)
+                  ;
+              }
+              else
+              {
+                Serial.print(F("Adding to Database ["));
+                Serial.print(sDNASequence);
+                Serial.print(F("] = ["));
+                Serial.print(sNewName);
+                Serial.println(F("]"));
+  
+                // Check for Bad Word
+                bool bBadWord = false;
+                for (int i=0; i<NMB_BAD_WORDS; i++)
+                {
+                  char sQuad[5] = "    ";
+                  for (int j=0; j<13; j++)
                   {
-                    if (hash[k] == ucBadWords[i][k])
-                      continue;
-                    break;
+                    int k;
+                    strncpy(sQuad, &sNewName[j], 4);                
+                    //generate the MD5 hash for our string
+                    unsigned char* hash=MD5::make_hash(sQuad);
+                    
+                    for (k=0; k<16; k++)
+                    {
+                      if (hash[k] == ucBadWords[i][k])
+                        continue;
+                      break;
+                    }
+                    if (k == 16)
+                      bBadWord = true;                  
+                    free(hash);
+                    if (bBadWord)
+                      break;
                   }
-                  if (k == 16)
-                    bBadWord = true;                  
-                  free(hash);
                   if (bBadWord)
                     break;
                 }
                 if (bBadWord)
-                  break;
-              }
-              if (bBadWord)
-              {
-                lcd.setCursor(0, 0);
-                lcd.print(F("Bad Word in Name"));
-                lcd.setCursor(0, 1);
-                lcd.print(F(" Push Button    "));
-Serial.println(F("BAD WORD!"));                
-                while (GetButtonPressed() == false)
-                  ;
-//                while (digitalRead(SW) == LOW)
-//                  ;
-              }
-              else
-              {
-                // Now add to DATABASE
-                int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
-                for (int i = 0; i <= 11; i++)
                 {
-                  sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
-                  EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
-                  iOffset = iOffset + 1;
+                  lcd.setCursor(0, 0);
+                  lcd.print(F("Bad Word in Name"));
+                  lcd.setCursor(0, 1);
+                  lcd.print(F(" Push Button    "));
+  Serial.println(F("BAD WORD!"));                
+                  while (GetButtonPressed() == false)
+                    ;
                 }
-                iOffset = iOffset - 1;
-                for (int i = 0; i <= 17; i++)
+                else
                 {
-                  sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
-                  EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
-                  iOffset = iOffset + 1;
-                }
+                  // Now add to DATABASE
+                  int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
+                  for (int i = 0; i <= 11; i++)
+                  {
+                    sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
+                    EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
+                    iOffset = iOffset + 1;
+                  }
+                  iOffset = iOffset - 1;
+                  for (int i = 0; i <= 17; i++)
+                  {
+                    sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
+                    EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
+                    iOffset = iOffset + 1;
+                  }
+    
+                  iNumberOfEEPROM = iNumberOfEEPROM + 1;
+                  EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
   
-                iNumberOfEEPROM = iNumberOfEEPROM + 1;
-                EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
-
-                iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+                  iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+                }
               }
             }
           }
