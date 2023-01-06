@@ -291,6 +291,8 @@ Serial.println(F("]"));
   Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
 #endif
+
+  Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
 }
 
 void SetupEEPROM()
