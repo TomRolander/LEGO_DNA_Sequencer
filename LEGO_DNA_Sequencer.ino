@@ -21,7 +21,7 @@
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
 
-#define FLORA 0
+#define FLORA 1
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -184,6 +184,17 @@ static bool bBuzzer = true;
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 
+#if FLORA
+#define C_TEST_VALUE  130
+#define R_TEST_VALUE  35
+#define B_TEST_VALUE  30
+#else
+#define C_TEST_VALUE  900
+#define R_TEST_VALUE  170
+#define B_TEST_VALUE  220
+#endif
+
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -292,7 +303,7 @@ Serial.println(F("]"));
   Serial.println(iNumberOfEEPROM);
 #endif
 
-  Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
+  Beeps(3, 10, 200);  // 3 Beeps, 10MS ON, 200MS OFF
 }
 
 void SetupEEPROM()
@@ -321,59 +332,48 @@ char GetLEGOColor()
 
   delay(INTEGRATION_TIME_DELAY);
   tcs.getRawData(&r, &g, &b, &c);
-  /*
-    r = r/21;
-    g = g/21;
-    b = b/21;
-    c = c/21;
-  */
+#if 0
   Serial.print(F("Red: ")); Serial.print(r, DEC); Serial.print(F(" "));
   Serial.print(F("Green: ")); Serial.print(g, DEC); Serial.print(F(" "));
   Serial.print(F("Blue: ")); Serial.print(b, DEC); Serial.print(F(" "));
   Serial.print(F("Color: ")); Serial.print(c, DEC); Serial.print(F(" "));
-
-#if FLORA
-//  if (c >= 350)
-  if (c >= 140)
 #else
-  if (c > 900 /*200*/)
+  Serial.print(r, DEC); Serial.print(F(","));
+  Serial.print(g, DEC); Serial.print(F(","));
+  Serial.print(b, DEC); Serial.print(F(","));
+  Serial.print(c, DEC); Serial.print(F(","));
 #endif
+
+
+
+  if (c >= C_TEST_VALUE)
   {
     UpdateLCD(YELLOW);
     cRetcode = YELLOW;
-    Serial.print(F("C Yellow"));
+    Serial.println(F("Y"));
   }
-#if FLORA
-  else if (r >= 130) {
-#else    
-  else if (r >= 180) {
-#endif    
+  else
+  if (r >= R_TEST_VALUE)
+  {
     UpdateLCD(RED);
     cRetcode = RED;
-    Serial.print(F("G Red"));
+    Serial.println(F("R"));
   }
-  else if (b >= 270) {
+  else
+  if (b >= B_TEST_VALUE)
+  {  
     UpdateLCD(BLUE);
     cRetcode = BLUE;
-    Serial.print(F("T Blue"));
+    Serial.println(F("B"));
   }
-  else if (g > b && g > r) {
+  else
+  /* if (g > b && g > r) */
+  {
     UpdateLCD(GREEN);
     cRetcode = GREEN;
-    Serial.print(F("A Green"));
-  }
-  else if (r > g && r > b) {
-    UpdateLCD(RED);
-    cRetcode = RED;
-    Serial.print(F("G Red"));
-  }
-  else { /*if(b > g)*/
-    UpdateLCD(BLUE);
-    cRetcode = BLUE;
-    Serial.print(F("T Blue"));
-  }
-  Serial.println(F(""));
-
+    Serial.println(F("G"));    
+  }  
+  
   return (cRetcode);
 }
 
@@ -628,7 +628,7 @@ void loop()
     lcd.setCursor(0, 0);
     lcd.print(F("Load LEGO Tray  "));
 
-    Beeps(1, 50, 0);  // 1 Beep, 50MS ON, 0MS OFF    
+    Beeps(1, 5, 0);  // 1 Beep, 5MS ON, 0MS OFF    
 
     lcd.setCursor(0, 1);
     lcd.print(F(" Push Button    "));
@@ -772,6 +772,8 @@ Serial.println(iRotaryEncoder_Counter);
   sDNASequence[10] = '\0';
 
   Serial.println("");
+  Serial.println(F("---------- CSV ----------"));
+  Serial.println(F("R,G,B,Y,M"));  
 
   for (int i = 0; i < 10; i++)
   {
@@ -792,7 +794,7 @@ Serial.println(iRotaryEncoder_Counter);
 
     if (i < 9)
     {
-      Beeps(1, 1, 0);   // 1 Beep, 1MS ON, 0MS OFF
+      Beeps(1, 2, 0);   // 1 Beep, 2MS ON, 0MS OFF
       myStepper.step(STEPS_PER_LEGO_BLOCK);
     }
     else
@@ -803,7 +805,7 @@ Serial.println(iRotaryEncoder_Counter);
       lcd.setCursor(0, 0);
       lcd.print(F("Unloading tray  "));
 
-      Beeps(2, 50, 250);  // 2 Beeps, 50MS ON, 250MS OFF
+      Beeps(2, 5, 250);  // 2 Beeps, 5MS ON, 250MS OFF
 
       myStepper.setSpeed(15);
 //    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
@@ -823,7 +825,7 @@ Serial.println(iRotaryEncoder_Counter);
         lcd.setCursor(0, 1);
         lcd.print(F("  PUSH BUTTON   "));
 
-        Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF        
+        Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF        
         
         while (GetButtonPressed() == false)
           ;
@@ -844,7 +846,7 @@ Serial.println(iRotaryEncoder_Counter);
           lcd.setCursor(0, 1);
           lcd.print(sLEGO_DNA_Name[index]);
           
-          Beeps(3, 50, 200);  // 3 Beeps, 50MS ON, 200MS OFF
+          Beeps(3, 5, 200);  // 3 Beeps, 5MS ON, 200MS OFF
         }
         else
         {
@@ -853,7 +855,7 @@ Serial.println(iRotaryEncoder_Counter);
           lcd.setCursor(0, 1);
           lcd.print(F(" U N K N O W N  "));
   
-          Beeps(4, 100, 200);  // 4 Beeps, 100MS ON, 200MS OFF
+          Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF
         }
       
         while (GetButtonPressed() == false)
