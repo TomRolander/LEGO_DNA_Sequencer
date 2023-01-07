@@ -29,6 +29,8 @@
 
 static int iState = STATE_START;
 
+static int iStepPosition = 0;
+
 static bool bAutomated = true;
 
 #define BUZZER        A0
@@ -94,7 +96,6 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 #define EEPROM_NUMBER_OF_LEGO_DNA           4 // 004-004  iNumberOfEEPROM
 #define EEPROM_LEGO_DNA                     5 // 005-004  LEGO_DNAs
 
-//#define EEPROM_LEGO_DNA_MAX                18
 #define EEPROM_LEGO_DNA_MAX                10
 #define EEPROM_LEGO_DNA_ENTRY_SIZE         28
 
@@ -180,8 +181,6 @@ static bool bBuzzer = true;
 #define YELLOW  'C'
 
 /* Initialise with specific int time and gain values */
-#define INTEGRATION_TIME_DELAY 50
-
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 
 #if FLORA
@@ -330,7 +329,6 @@ char GetLEGOColor()
 
   uint16_t r, g, b, c;
 
-  delay(INTEGRATION_TIME_DELAY);
   tcs.getRawData(&r, &g, &b, &c);
 #if 0
   Serial.print(F("Red: ")); Serial.print(r, DEC); Serial.print(F(" "));
@@ -338,6 +336,7 @@ char GetLEGOColor()
   Serial.print(F("Blue: ")); Serial.print(b, DEC); Serial.print(F(" "));
   Serial.print(F("Color: ")); Serial.print(c, DEC); Serial.print(F(" "));
 #else
+  Serial.print(iStepPosition, DEC); Serial.print(F(","));
   Serial.print(r, DEC); Serial.print(F(","));
   Serial.print(g, DEC); Serial.print(F(","));
   Serial.print(b, DEC); Serial.print(F(","));
@@ -350,28 +349,28 @@ char GetLEGOColor()
   {
     UpdateLCD(YELLOW);
     cRetcode = YELLOW;
-    Serial.println(F("Y"));
+    Serial.println(F("Y,C"));
   }
   else
   if (r >= R_TEST_VALUE)
   {
     UpdateLCD(RED);
     cRetcode = RED;
-    Serial.println(F("R"));
+    Serial.println(F("R,G"));
   }
   else
   if (b >= B_TEST_VALUE)
   {  
     UpdateLCD(BLUE);
     cRetcode = BLUE;
-    Serial.println(F("B"));
+    Serial.println(F("B,T"));
   }
   else
   /* if (g > b && g > r) */
   {
     UpdateLCD(GREEN);
     cRetcode = GREEN;
-    Serial.println(F("G"));    
+    Serial.println(F("G,A"));    
   }  
   
   return (cRetcode);
@@ -602,7 +601,7 @@ void loop()
         myStepper.setSpeed(iValue);
       else
       {
-        myStepper.step(iValue);
+        MoveTray(iValue);
         GetLEGOColor();
       }
     }
@@ -685,11 +684,13 @@ Serial.println(F("Enter Command Line Mode"));
           case MAINTENANCE_OP_UNLOAD_TRAY:
 Serial.println(F("Unload Tray"));
             myStepper.step(-4000);
+            iStepPosition = 0;
             break;
             
           case MAINTENANCE_OP_LOAD_TRAY:
 Serial.println(F("Load Tray"));
             myStepper.step(1640);
+            iStepPosition = 0;
             break;
 
           case MAINTENANCE_OP_POSITION_TRAY:
@@ -706,9 +707,9 @@ Serial.print(F("  iRotaryEncoder_Counter = "));
 Serial.println(iRotaryEncoder_Counter);
 #endif                  
                   if (iRotaryEncoder_Counter > iCounter)
-                    myStepper.step(50);
+                    MoveTray(50);
                   else
-                    myStepper.step(-50);
+                    MoveTray(-50);
                   iCounter = iRotaryEncoder_Counter;
                 }
               }              
@@ -764,16 +765,15 @@ Serial.println(iRotaryEncoder_Counter);
   digitalWrite (LED_TCS34725, HIGH);
 
   myStepper.setSpeed(10);
-  //myStepper.step((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4));
-//  myStepper.step(1260);
-  myStepper.step(460);
+  iStepPosition = 0;
+  MoveTray(460);
   
   char sDNASequence[11];
   sDNASequence[10] = '\0';
 
   Serial.println("");
   Serial.println(F("---------- CSV ----------"));
-  Serial.println(F("R,G,B,Y,M"));  
+  Serial.println(F("P,R,G,B,Y,M,DNA"));  
 
   for (int i = 0; i < 10; i++)
   {
@@ -789,13 +789,13 @@ Serial.println(iRotaryEncoder_Counter);
         ;
     }
 
-    delay(500);
+    delay(100); // Delay a little for visual effect
     sDNASequence[i] = GetLEGOColor();
 
     if (i < 9)
     {
       Beeps(1, 2, 0);   // 1 Beep, 2MS ON, 0MS OFF
-      myStepper.step(STEPS_PER_LEGO_BLOCK);
+      MoveTray(STEPS_PER_LEGO_BLOCK);
     }
     else
     {
@@ -808,9 +808,7 @@ Serial.println(iRotaryEncoder_Counter);
       Beeps(2, 5, 250);  // 2 Beeps, 5MS ON, 250MS OFF
 
       myStepper.setSpeed(15);
-//    myStepper.step(0 - ((STEPS_PER_LEGO_BLOCK * 9) + ((STEPS_PER_LEGO_BLOCK) + ((3*STEPS_PER_LEGO_BLOCK)/4))));
-//      myStepper.step(-6210);
-      myStepper.step(-5410);
+      MoveTray(-5410);
       
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
@@ -853,7 +851,7 @@ Serial.println(iRotaryEncoder_Counter);
           lcd.setCursor(0, 0);
           lcd.print(F("DNA not a match "));
           lcd.setCursor(0, 1);
-          lcd.print(F(" U N K N O W N  "));
+          lcd.print(F("  UNKNOWN DNA!  "));
   
           Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF
         }
@@ -1048,6 +1046,12 @@ void Beeps(int iNmbBeeps, int iMSLengthON, int iMSLengthOFF)
     digitalWrite(BUZZER, LOW);
     delay(iMSLengthOFF);//wait for 1ms    
   }
+}
+
+void MoveTray(int iSteps)
+{
+  iStepPosition = iStepPosition + iSteps;
+  myStepper.step(iSteps);
 }
 
 #if 0
