@@ -21,7 +21,7 @@
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
 
-#define FLORA 1
+#define FLORA 0
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -93,8 +93,11 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 #define EEPROM_SIZE 512
 
 #define EEPROM_SIGNATURE                    0 // 000-003  Signature 'LEGO'
-#define EEPROM_NUMBER_OF_LEGO_DNA           4 // 004-004  iNumberOfEEPROM
-#define EEPROM_LEGO_DNA                     5 // 005-004  LEGO_DNAs
+#define EEPROM_C_THRESHHOLD                 4 // 004-005  iC_THRESHHOLD
+#define EEPROM_R_THRESHHOLD                 6 // 006-007  iR_THRESHHOLD
+#define EEPROM_B_THRESHHOLD                 8 // 008-009  iB_THRESHHOLD
+#define EEPROM_NUMBER_OF_LEGO_DNA          10 // 010-010  iNumberOfEEPROM
+#define EEPROM_LEGO_DNA                    11 // 011-511  LEGO_DNAs
 
 #define EEPROM_LEGO_DNA_MAX                10
 #define EEPROM_LEGO_DNA_ENTRY_SIZE         28
@@ -104,8 +107,14 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 
 static int iNumberOfEEPROM = 0;
 
+#define NMB_LEGO_BRICKS 10
+
+int iBrickSequencing[NMB_LEGO_BRICKS][4];
+char sDNASequence[NMB_LEGO_BRICKS+1];
+
+
 int iLEGO_DNA_Number = 7;
-char sLEGO_DNA_Sequence[LEGO_DNA_MAX][11] =
+char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS+1] =
 { "ACGTACGTAC",
   "ATTGGTCATT",
   "TGCTCCTACA",
@@ -140,7 +149,7 @@ const int stepsPerRevolution = 2038;
 #define STEPPER_PIN_3 11
 #define STEPPER_PIN_4 12
 
-#define STEPS_PER_LEGO_BLOCK  550
+#define STEPS_PER_LEGO_BRICK  550
 
 // Creates an instance of stepper class
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
@@ -152,7 +161,7 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #define MAINTENANCE_OP_UNLOAD_TRAY    2
 #define MAINTENANCE_OP_LOAD_TRAY      3
 #define MAINTENANCE_OP_POSITION_TRAY  4
-#define MAINTENANCE_OP_ZERO_EEPROM    5
+#define MAINTENANCE_OP_ZERO_NEW_DNA   5
 #define MAINTENANCE_OP_BUZZER_OFF     6
 #define MAINTENANCE_OP_BUZZER_ON      7
 #define MAINTENANCE_OP_VERSION_INFO   8
@@ -163,7 +172,7 @@ char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
   "  UNLOAD TRAY   ",
   "  LOAD TRAY     ",
   "  POSITION TRAY ",
-  "  ZERO EEPROM   ",
+  "  ZERO NEW DNA  ",
   "  BUZZER OFF    ",
   "  BUZZER ON     ",
   "  VERSION INFO  "
@@ -184,15 +193,18 @@ static bool bBuzzer = true;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 
 #if FLORA
-#define C_TEST_VALUE  130
-#define R_TEST_VALUE  35
-#define B_TEST_VALUE  30
+#define C_THRESHHOLD  130
+#define R_THRESHHOLD  35
+#define B_THRESHHOLD  30
 #else
-#define C_TEST_VALUE  900
-#define R_TEST_VALUE  170
-#define B_TEST_VALUE  220
+#define C_THRESHHOLD  900
+#define R_THRESHHOLD  170
+#define B_THRESHHOLD  220
 #endif
 
+static int iC_THRESHHOLD = C_THRESHHOLD;
+static int iR_THRESHHOLD = R_THRESHHOLD;
+static int iB_THRESHHOLD = B_THRESHHOLD;
 
 void setup() {
   Serial.begin(115200);
@@ -245,7 +257,7 @@ void setup() {
 
 for (int i=0; i<128; i++)
 {
-  int iByte = EEPROM.read(i);
+  int iByte = EEPROM[i];
   if (i % 16 == 0)
     Serial.println("");
   if (iByte < 16)
@@ -255,11 +267,15 @@ for (int i=0; i<128; i++)
 }
 Serial.println("");
 
-  if (EEPROM.read(EEPROM_SIGNATURE + 0) == 'L' &&
-      EEPROM.read(EEPROM_SIGNATURE + 1) == 'E' &&
-      EEPROM.read(EEPROM_SIGNATURE + 2) == 'G' &&
-      EEPROM.read(EEPROM_SIGNATURE + 3) == 'O')
+  if (EEPROM[EEPROM_SIGNATURE + 0] == 'L' &&
+      EEPROM[EEPROM_SIGNATURE + 1] == 'E' &&
+      EEPROM[EEPROM_SIGNATURE + 2] == 'G' &&
+      EEPROM[EEPROM_SIGNATURE + 3] == 'O')
   {
+    iC_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_C_THRESHHOLD);
+    iR_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_R_THRESHHOLD);
+    iB_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_B_THRESHHOLD);
+    
     iNumberOfEEPROM = EEPROM[EEPROM_NUMBER_OF_LEGO_DNA];
 
     int index;
@@ -287,7 +303,6 @@ Serial.println(F("]"));
       
       iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
     }
-
   }
   else
   {
@@ -300,9 +315,26 @@ Serial.println(F("]"));
   Serial.println(F("EEPROM LEGO found"));
   Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
+  Serial.print(F("C Threshhold = "));
+  Serial.println(iC_THRESHHOLD);
+  Serial.print(F("R Threshhold = "));
+  Serial.println(iR_THRESHHOLD);
+  Serial.print(F("B Threshhold = "));
+  Serial.println(iB_THRESHHOLD);
 #endif
 
   Beeps(3, 10, 200);  // 3 Beeps, 10MS ON, 200MS OFF
+}
+
+void writeUnsignedIntIntoEEPROM(int address, unsigned int number)
+{ 
+  EEPROM[address] = number >> 8;
+  EEPROM[address + 1] = number & 0xFF;
+}
+
+unsigned int readUnsignedIntFromEEPROM(int address)
+{
+  return (EEPROM[address] << 8) + EEPROM[address + 1];
 }
 
 void SetupEEPROM()
@@ -311,6 +343,9 @@ void SetupEEPROM()
   EEPROM[EEPROM_SIGNATURE + 1] = 'E';
   EEPROM[EEPROM_SIGNATURE + 2] = 'G';
   EEPROM[EEPROM_SIGNATURE + 3] = 'O';
+  writeUnsignedIntIntoEEPROM(EEPROM_C_THRESHHOLD, iC_THRESHHOLD);
+  writeUnsignedIntIntoEEPROM(EEPROM_R_THRESHHOLD, iR_THRESHHOLD);
+  writeUnsignedIntIntoEEPROM(EEPROM_B_THRESHHOLD, iB_THRESHHOLD);
   EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
 
 #if DEBUG_OUTPUT
@@ -323,13 +358,19 @@ void UpdateLCD(char cColor)
   lcd.print(cColor);
 }
 
-char GetLEGOColor()
+char GetLEGOColor(int index)
 {
   char cRetcode = '\0';
 
   uint16_t r, g, b, c;
 
   tcs.getRawData(&r, &g, &b, &c);
+
+  iBrickSequencing[index][0] = r;
+  iBrickSequencing[index][1] = g;
+  iBrickSequencing[index][2] = b;
+  iBrickSequencing[index][3] = c;
+  
 #if 0
   Serial.print(F("Red: ")); Serial.print(r, DEC); Serial.print(F(" "));
   Serial.print(F("Green: ")); Serial.print(g, DEC); Serial.print(F(" "));
@@ -345,21 +386,21 @@ char GetLEGOColor()
 
 
 
-  if (c >= C_TEST_VALUE)
+  if (c >= iC_THRESHHOLD)
   {
     UpdateLCD(YELLOW);
     cRetcode = YELLOW;
     Serial.println(F("Y,C"));
   }
   else
-  if (r >= R_TEST_VALUE)
+  if (r >= iR_THRESHHOLD)
   {
     UpdateLCD(RED);
     cRetcode = RED;
     Serial.println(F("R,G"));
   }
   else
-  if (b >= B_TEST_VALUE)
+  if (b >= iB_THRESHHOLD)
   {  
     UpdateLCD(BLUE);
     cRetcode = BLUE;
@@ -551,13 +592,13 @@ void loop()
             break;
 
           case 'C':
-            GetLEGOColor();
+            GetLEGOColor(0);
             break;
 
           case 'K':
             while (Serial.available() <= 0)
             {
-              GetLEGOColor();
+              GetLEGOColor(0);
               delay(500);
             }
             nChars = Serial.readBytes(cBuffer, sizeof(cBuffer));
@@ -602,7 +643,7 @@ void loop()
       else
       {
         MoveTray(iValue);
-        GetLEGOColor();
+        GetLEGOColor(0);
       }
     }
     return;
@@ -716,10 +757,10 @@ Serial.println(iRotaryEncoder_Counter);
             }
             break;
         
-          case MAINTENANCE_OP_ZERO_EEPROM:
+          case MAINTENANCE_OP_ZERO_NEW_DNA:
             iNumberOfEEPROM = 0;
             iLEGO_DNA_Number = 6;
-            for (int i=0; i<512; i++)
+            for (int i=EEPROM_NUMBER_OF_LEGO_DNA; i<512; i++)
               EEPROM[i] = '\0';
             SetupEEPROM();
             break;
@@ -768,14 +809,13 @@ Serial.println(iRotaryEncoder_Counter);
   iStepPosition = 0;
   MoveTray(460);
   
-  char sDNASequence[11];
-  sDNASequence[10] = '\0';
+  sDNASequence[NMB_LEGO_BRICKS] = '\0';
 
   Serial.println("");
   Serial.println(F("---------- CSV ----------"));
   Serial.println(F("P,R,G,B,Y,M,DNA"));  
 
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < NMB_LEGO_BRICKS; i++)
   {
     if (bAutomated == false)
     {
@@ -790,12 +830,12 @@ Serial.println(iRotaryEncoder_Counter);
     }
 
     delay(100); // Delay a little for visual effect
-    sDNASequence[i] = GetLEGOColor();
+    sDNASequence[i] = GetLEGOColor(i);
 
     if (i < 9)
     {
       Beeps(1, 2, 0);   // 1 Beep, 2MS ON, 0MS OFF
-      MoveTray(STEPS_PER_LEGO_BLOCK);
+      MoveTray(STEPS_PER_LEGO_BRICK);
     }
     else
     {
@@ -809,6 +849,19 @@ Serial.println(iRotaryEncoder_Counter);
 
       myStepper.setSpeed(15);
       MoveTray(-5410);
+
+      Serial.print("[");
+      Serial.print(sDNASequence);
+      Serial.println("]");
+      for (int i=0; i<NMB_LEGO_BRICKS; i++)
+      {
+        for (int j=0; j<4; j++)
+        {
+          Serial.print(iBrickSequencing[i][j]);
+          Serial.print(" ");
+        }
+        Serial.println("");
+      }
       
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
@@ -992,7 +1045,6 @@ Serial.println(iRotaryEncoder_Counter);
       iState = STATE_LOAD_TRAY;
     }
   }
-
 }
 
 char GetNextChar(int index)
