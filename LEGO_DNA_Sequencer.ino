@@ -21,7 +21,7 @@
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
 
-#define FLORA 0
+#define FLORA 1
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -37,7 +37,9 @@ static bool bAutomated = true;
 
 #define LED_TCS34725  A3
 
+#if DEBUG_MODE
 static bool bCommandLineMode = false;
+#endif
 
 // Rotary Encoder Inputs
 #define CLK A1
@@ -54,6 +56,12 @@ char sNameChars[40] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 <\xff";
 //                     0123456789012345678901234567890123456789
 //                     0         1         2         3
 #define NMB_NAME_CHARS  39
+
+char sNumberChars[14] = "0123456789 <\xff";
+//                       01234567890123
+//                       0         1   
+#define NMB_NUMBER_CHARS  13
+
 
 #include <MD5.h>
 
@@ -93,9 +101,9 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 #define EEPROM_SIZE 512
 
 #define EEPROM_SIGNATURE                    0 // 000-003  Signature 'LEGO'
-#define EEPROM_C_THRESHHOLD                 4 // 004-005  iC_THRESHHOLD
-#define EEPROM_R_THRESHHOLD                 6 // 006-007  iR_THRESHHOLD
-#define EEPROM_B_THRESHHOLD                 8 // 008-009  iB_THRESHHOLD
+#define EEPROM_CLEAR_CHANNEL_THRESHHOLD                 4 // 004-005  iRED_CHANNEL_THRESHHOLD
+#define EEPROM_RED_CHANNEL_THRESHHOLD                 6 // 006-007  iRED_CHANNEL_THRESHHOLD
+#define EEPROM_BLUE_CHANNEL_THRESHHOLD                 8 // 008-009  iBLUE_CHANNEL_THRESHHOLD
 #define EEPROM_NUMBER_OF_LEGO_DNA          10 // 010-010  iNumberOfEEPROM
 #define EEPROM_LEGO_DNA                    11 // 011-511  LEGO_DNAs
 
@@ -115,7 +123,7 @@ char sDNASequence[NMB_LEGO_BRICKS+1];
 
 int iLEGO_DNA_Number = 7;
 char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS+1] =
-{ "ACGTACGTAC",
+{ "CCGGTTAACC",
   "ATTGGTCATT",
   "TGCTCCTACA",
   "CACAATCTAC",
@@ -124,7 +132,7 @@ char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS+1] =
   "CGTCTACCAA"
 };
 char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
-{ " ACGTACGTAC TEST",
+{ " CCGGTTAACC TEST",
   "  MAKO SHARK    ",
   "  ABALONE       ",
   "  SQUID         ",
@@ -155,8 +163,13 @@ const int stepsPerRevolution = 2038;
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
 
+#if DEBUG_MODE
+#define MAINTENANCE_NMB_OPS           10
+#else
 #define MAINTENANCE_NMB_OPS           9
+#endif
 #define MAINTENANCE_OP_CANCEL         0
+#if DEBUG_MODE
 #define MAINTENANCE_OP_COMMAND_LINE   1
 #define MAINTENANCE_OP_UNLOAD_TRAY    2
 #define MAINTENANCE_OP_LOAD_TRAY      3
@@ -164,19 +177,47 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPER_PIN_1, STEPPER_PIN_3, ST
 #define MAINTENANCE_OP_ZERO_NEW_DNA   5
 #define MAINTENANCE_OP_BUZZER_OFF     6
 #define MAINTENANCE_OP_BUZZER_ON      7
+#define MAINTENANCE_OP_ADVANCED       8
+#define MAINTENANCE_OP_VERSION_INFO   9
+#endif
+#define MAINTENANCE_OP_UNLOAD_TRAY    1
+#define MAINTENANCE_OP_LOAD_TRAY      2
+#define MAINTENANCE_OP_POSITION_TRAY  3
+#define MAINTENANCE_OP_ZERO_NEW_DNA   4
+#define MAINTENANCE_OP_BUZZER_OFF     5
+#define MAINTENANCE_OP_BUZZER_ON      6
+#define MAINTENANCE_OP_ADVANCED       7
 #define MAINTENANCE_OP_VERSION_INFO   8
 
 char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
 { "  CANCEL        ",
+#if DEBUG_MODE
   "  COMMAND LINE  ",
+#endif
   "  UNLOAD TRAY   ",
   "  LOAD TRAY     ",
   "  POSITION TRAY ",
   "  ZERO NEW DNA  ",
   "  BUZZER OFF    ",
   "  BUZZER ON     ",
+  "  ADVANCED      ",
   "  VERSION INFO  "
 };
+
+#define ADVANCED_NMB_OPS            4
+
+#define ADVANCED_OP_CANCEL          0
+#define ADVANCED_OP_CLEAR_CHANNEL   1
+#define ADVANCED_OP_RED_CHANNEL     2
+#define ADVANCED_OP_BLUE_CHANNEL    3
+
+char sAdvancedOp[ADVANCED_NMB_OPS][17] =
+{ "  CANCEL        ",
+  "  CLEAR CHANNEL ",
+  "  RED CHANNEL   ",
+  "  BLUE CHANNEL  "
+};
+
 
 static bool bBuzzer = true;
 
@@ -193,18 +234,18 @@ static bool bBuzzer = true;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
 
 #if FLORA
-#define C_THRESHHOLD  130
-#define R_THRESHHOLD  35
-#define B_THRESHHOLD  30
+#define CLEAR_CHANNEL_THRESHHOLD  130
+#define RED_CHANNEL_THRESHHOLD  35
+#define BLUE_CHANNEL_THRESHHOLD  30
 #else
-#define C_THRESHHOLD  900
-#define R_THRESHHOLD  170
-#define B_THRESHHOLD  220
+#define CLEAR_CHANNEL_THRESHHOLD  900
+#define RED_CHANNEL_THRESHHOLD  170
+#define BLUE_CHANNEL_THRESHHOLD  220
 #endif
 
-static int iC_THRESHHOLD = C_THRESHHOLD;
-static int iR_THRESHHOLD = R_THRESHHOLD;
-static int iB_THRESHHOLD = B_THRESHHOLD;
+static int iCLEAR_CHANNEL_THRESHHOLD = CLEAR_CHANNEL_THRESHHOLD;
+static int iRED_CHANNEL_THRESHHOLD = RED_CHANNEL_THRESHHOLD;
+static int iBLUE_CHANNEL_THRESHHOLD = BLUE_CHANNEL_THRESHHOLD;
 
 void setup() {
   Serial.begin(115200);
@@ -272,9 +313,9 @@ Serial.println("");
       EEPROM[EEPROM_SIGNATURE + 2] == 'G' &&
       EEPROM[EEPROM_SIGNATURE + 3] == 'O')
   {
-    iC_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_C_THRESHHOLD);
-    iR_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_R_THRESHHOLD);
-    iB_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_B_THRESHHOLD);
+    iCLEAR_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD);
+    iRED_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD);
+    iBLUE_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD);
     
     iNumberOfEEPROM = EEPROM[EEPROM_NUMBER_OF_LEGO_DNA];
 
@@ -315,12 +356,12 @@ Serial.println(F("]"));
   Serial.println(F("EEPROM LEGO found"));
   Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
-  Serial.print(F("C Threshhold = "));
-  Serial.println(iC_THRESHHOLD);
-  Serial.print(F("R Threshhold = "));
-  Serial.println(iR_THRESHHOLD);
-  Serial.print(F("B Threshhold = "));
-  Serial.println(iB_THRESHHOLD);
+  Serial.print(F("Clear Channel Threshhold = "));
+  Serial.println(iCLEAR_CHANNEL_THRESHHOLD);
+  Serial.print(F("Red   Channel Threshhold = "));
+  Serial.println(iRED_CHANNEL_THRESHHOLD);
+  Serial.print(F("Blue  Channel Threshhold = "));
+  Serial.println(iBLUE_CHANNEL_THRESHHOLD);
 #endif
 
   Beeps(3, 10, 200);  // 3 Beeps, 10MS ON, 200MS OFF
@@ -343,9 +384,9 @@ void SetupEEPROM()
   EEPROM[EEPROM_SIGNATURE + 1] = 'E';
   EEPROM[EEPROM_SIGNATURE + 2] = 'G';
   EEPROM[EEPROM_SIGNATURE + 3] = 'O';
-  writeUnsignedIntIntoEEPROM(EEPROM_C_THRESHHOLD, iC_THRESHHOLD);
-  writeUnsignedIntIntoEEPROM(EEPROM_R_THRESHHOLD, iR_THRESHHOLD);
-  writeUnsignedIntIntoEEPROM(EEPROM_B_THRESHHOLD, iB_THRESHHOLD);
+  writeUnsignedIntIntoEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD, iCLEAR_CHANNEL_THRESHHOLD);
+  writeUnsignedIntIntoEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD);
+  writeUnsignedIntIntoEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD, iBLUE_CHANNEL_THRESHHOLD);
   EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
 
 #if DEBUG_OUTPUT
@@ -386,21 +427,21 @@ char GetLEGOColor(int index)
 
 
 
-  if (c >= iC_THRESHHOLD)
+  if (c >= iCLEAR_CHANNEL_THRESHHOLD)
   {
     UpdateLCD(YELLOW);
     cRetcode = YELLOW;
     Serial.println(F("Y,C"));
   }
   else
-  if (r >= iR_THRESHHOLD)
+  if (r >= iRED_CHANNEL_THRESHHOLD)
   {
     UpdateLCD(RED);
     cRetcode = RED;
     Serial.println(F("R,G"));
   }
   else
-  if (b >= iB_THRESHHOLD)
+  if (b >= iBLUE_CHANNEL_THRESHHOLD)
   {  
     UpdateLCD(BLUE);
     cRetcode = BLUE;
@@ -513,6 +554,62 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
   return (bResponse);
 }
 
+///////////////////////////////////////////////
+int GetNumber(int iCurrentValue, char *iName)
+{
+  Serial.println(F("GetNumber!"));
+  lcd.setCursor(0, 0);
+  lcd.print(F("                "));
+  lcd.setCursor(0, 0);
+  lcd.print("Enter ");
+  lcd.write((byte) 0xff);
+  lcd.print(F(" to end "));
+  lcd.setCursor(0, 1);
+  lcd.print(F("                "));
+  lcd.setCursor(0, 1);
+  lcd.print(iName);
+  lcd.print(F("="));
+
+  char sNewNumber[5] = "";
+  char cNextChar;
+
+  int index = 0;
+  while (index < 4)
+  {
+    cNextChar = GetNextChar(index);
+    if (cNextChar == '\0')
+    {
+      break;
+    }
+    if (cNextChar == '<')
+    {
+      if (index > 0)
+      {
+        lcd.setCursor(index, 1);
+        lcd.print(' ');
+        index = index - 1;
+        continue;
+      }
+    }
+    sNewNumber[index] = cNextChar;
+    index = index + 1;
+    sNewNumber[index] = '\0';
+  }
+  for (; index < 4; index++)
+  {
+    sNewNumber[index] = ' ';
+  }
+  sNewNumber[4] = '\0';
+  Serial.println(sNewNumber);
+
+  if (strcmp(sNewNumber, "    ") != 0)
+  if (GetYesOrNo(false, sNewNumber))
+  {
+//    if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
+  }
+}
+///////////////////////////////////////////////
+
 bool CheckRotaryEncoder()
 {
   bool bResponse = true;
@@ -548,6 +645,7 @@ bool CheckRotaryEncoder()
 
 void loop()
 {
+#if DEBUG_MODE
   if (bCommandLineMode)
   {
     if (Serial.available() > 0)
@@ -648,6 +746,7 @@ void loop()
     }
     return;
   }
+#endif  
 
   if (iState == STATE_START)
   {
@@ -714,13 +813,17 @@ void loop()
 Serial.println(F("Cancel"));
             StartSequencer();
             iState = STATE_START;
+#if DEBUG_MODE            
             bCommandLineMode = false;
+#endif            
             break;
 
+#if DEBUG_MODE
           case MAINTENANCE_OP_COMMAND_LINE:
 Serial.println(F("Enter Command Line Mode"));
             bCommandLineMode = true;
             break;
+#endif            
 
           case MAINTENANCE_OP_UNLOAD_TRAY:
 Serial.println(F("Unload Tray"));
@@ -773,6 +876,96 @@ Serial.println(iRotaryEncoder_Counter);
             bBuzzer = false;
             break;
 
+          case MAINTENANCE_OP_ADVANCED:
+////////////////////////////////////////////////////////////////////////////////////////////
+
+            while (GetButtonPressed() == false)
+            {
+              //if (CheckRotaryEncoder())
+              {        
+                lcd.setCursor(0, 0);
+                lcd.print(F("Select Option:  "));
+        
+                int iAdvancedOp = ADVANCED_OP_CANCEL;
+        
+                while (true)
+                {
+                  lcd.setCursor(0, 1);
+                  lcd.print(sAdvancedOp[iAdvancedOp]);
+        
+                  if (GetButtonPressed())
+                    break;
+        
+                  int iCounter = iRotaryEncoder_Counter;
+                  if (CheckRotaryEncoder())
+                  {
+                    if (iRotaryEncoder_Counter > iCounter)
+                    {
+                      iAdvancedOp++;
+                      if (iAdvancedOp  >= ADVANCED_NMB_OPS)
+                        iAdvancedOp = ADVANCED_OP_CANCEL;
+                    }
+                    else
+                    {
+                      iAdvancedOp--;
+                      if (iAdvancedOp < 0)
+                        iAdvancedOp = ADVANCED_OP_BLUE_CHANNEL;
+                    }
+                  }
+                }
+        
+                switch (iAdvancedOp)
+                {
+                  case ADVANCED_OP_CANCEL:
+        Serial.println(F("Cancel"));
+                    //return;
+                    break;
+        
+                  case ADVANCED_OP_CLEAR_CHANNEL:
+                    lcd.setCursor(0, 0);
+                    lcd.print(F("CLEAR CHANNEL   "));            
+                    lcd.setCursor(0, 1);
+                    lcd.print(F("                "));            
+                    lcd.setCursor(0, 1);
+                    lcd.print(iCLEAR_CHANNEL_THRESHHOLD);
+                    while (GetButtonPressed() == false &&
+                           CheckRotaryEncoder() == false)
+                    {
+                      delay(100);
+                    }
+
+                    GetNumber(iCLEAR_CHANNEL_THRESHHOLD, "CLEAR");
+                    
+                    break;
+        
+                  case ADVANCED_OP_RED_CHANNEL:
+                    break;
+        
+                  case ADVANCED_OP_BLUE_CHANNEL:
+                    break;
+        
+/*
+                  case MAINTENANCE_OP_VERSION_INFO:
+                    lcd.setCursor(0, 0);
+                    lcd.print(PROGRAM_SHORT);            
+                    lcd.setCursor(0, 1);
+                    lcd.print(VERSION_SHORT);
+                    while (GetButtonPressed() == false &&
+                           CheckRotaryEncoder() == false)
+                    {
+                      delay(100);
+                    }
+                    break;
+*/                    
+                 }
+                
+                return;
+              }
+            }
+
+////////////////////////////////////////////////////////////////////////////////////////////          
+            break;
+            
           case MAINTENANCE_OP_VERSION_INFO:
             lcd.setCursor(0, 0);
             lcd.print(PROGRAM_SHORT);            
@@ -1073,6 +1266,45 @@ char GetNextChar(int index)
           iCurrentCharIndex = iCurrentCharIndex - (iCurrentCounter - iRotaryEncoder_Counter);
           if (iCurrentCharIndex < 0)
             iCurrentCharIndex = NMB_NAME_CHARS-1;
+        }
+        lcd.setCursor(index, 1);
+        cCurrentChar = sNameChars[iCurrentCharIndex];
+        lcd.print(cCurrentChar);
+        iCurrentCounter = iRotaryEncoder_Counter;
+      }
+    }
+  }
+  if (cCurrentChar == '\xff')
+    cCurrentChar = '\0';
+  return (cCurrentChar);
+}
+
+char GetNextNumber(int index)
+{
+  int iCurrentCharIndex = NMB_NUMBER_CHARS-1;
+  char cCurrentChar = sNameChars[NMB_NUMBER_CHARS-1];
+
+  lcd.setCursor(index, 1);
+  lcd.print(cCurrentChar);
+
+  int iCurrentCounter = iRotaryEncoder_Counter;
+  while (GetButtonPressed() == false)
+  {
+    if (CheckRotaryEncoder())
+    {
+      if (iCurrentCounter != iRotaryEncoder_Counter)
+      {
+        if (iRotaryEncoder_Counter > iCurrentCounter)
+        {
+          iCurrentCharIndex = iCurrentCharIndex + (iRotaryEncoder_Counter - iCurrentCounter);
+          if (iCurrentCharIndex >= NMB_NUMBER_CHARS)
+            iCurrentCharIndex = 0;
+        }
+        else
+        {
+          iCurrentCharIndex = iCurrentCharIndex - (iCurrentCounter - iRotaryEncoder_Counter);
+          if (iCurrentCharIndex < 0)
+            iCurrentCharIndex = NMB_NUMBER_CHARS-1;
         }
         lcd.setCursor(index, 1);
         cCurrentChar = sNameChars[iCurrentCharIndex];
