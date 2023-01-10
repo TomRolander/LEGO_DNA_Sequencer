@@ -57,12 +57,12 @@ static int iRotaryEncoder_LastStateCLK;
 static bool bRotaryEncoder_CurrentDirectionClockwise;
 static unsigned long lastButtonPress = 0;
 
-char sNameChars[40] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 <\xff";
+char sNameChars[40] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 <*";
 //                     0123456789012345678901234567890123456789
 //                     0         1         2         3
 #define NMB_NAME_CHARS  39
 
-char sNumberChars[13] = "0123456789<\xff";
+char sNumberChars[13] = "0123456789<*";
 //                       0123456789012
 //                       0         1
 #define NMB_NUMBER_CHARS  12
@@ -1243,9 +1243,10 @@ void loop()
             Serial.println(F("Add to Database!"));
 #endif            
             lcd.setCursor(0, 0);
-            lcd.print(F("Name:  \xff to end "));
+            lcd.print(F("Name:  * to end "));
             lcd.setCursor(0, 1);
             lcd.print(F("                "));
+            F_RemoteLCDSerial(F("Name:  * to end "), F("                "));                
 
             char sNewName[17] = "";
             char cNextChar;
@@ -1271,6 +1272,11 @@ void loop()
               sNewName[index] = cNextChar;
               index = index + 1;
               sNewName[index] = '\0';
+
+              char lcd1[17] = "Name:  * to end ";
+              char lcd2[17] = "                ";
+              strncpy(lcd2, sNewName, strlen(sNewName));
+              RemoteLCDSerial(lcd1, lcd2);              
             }
             for (; index < 16; index++)
             {
@@ -1406,7 +1412,7 @@ char GetNextChar(int index)
       }
     }
   }
-  if (cCurrentChar == '\xff')
+  if (cCurrentChar == '*')
     cCurrentChar = '\0';
   return (cCurrentChar);
 }
@@ -1445,7 +1451,7 @@ char GetNextNumber(int index)
       }
     }
   }
-  if (cCurrentChar == '\xff')
+  if (cCurrentChar == '*')
     cCurrentChar = '\0';
   return (cCurrentChar);
 }
