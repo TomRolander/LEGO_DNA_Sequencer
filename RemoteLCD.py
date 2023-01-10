@@ -71,6 +71,8 @@ if type(args.comport) is NoneType:
     print ("--comport <COMPORT> is required!")
     exit(1)
 
+print ("Connecting to LEGO DNA Sequencer on Arduino on Port",args.comport)
+
 SerialObj = serial.Serial(args.comport) # COMxx   format on Windows
 
 #SerialObj = serial.Serial('COM4') # COMxx   format on Windows
