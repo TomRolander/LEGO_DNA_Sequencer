@@ -14,18 +14,23 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-01-05")
+#define VERSION F("Ver 0.9 2023-01-10")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 01-05-23")
+#define VERSION_SHORT F("Ver 0.9 01-10-23")
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 #define DEBUG_MODE   0
 
-#define FLORA 1
+#define FLORA 0
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
 #define STATE_SEQUENCING  2
+
+// Proc to reset the Arduino
+void (* re_set)(void) = 0x00;
+
+static bool bRemoteLCDSerial = false;
 
 static int iState = STATE_START;
 
@@ -57,10 +62,10 @@ char sNameChars[40] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 <\xff";
 //                     0         1         2         3
 #define NMB_NAME_CHARS  39
 
-char sNumberChars[14] = "0123456789 <\xff";
-//                       01234567890123
-//                       0         1   
-#define NMB_NUMBER_CHARS  13
+char sNumberChars[13] = "0123456789<\xff";
+//                       0123456789012
+//                       0         1
+#define NMB_NUMBER_CHARS  12
 
 
 #include <MD5.h>
@@ -68,30 +73,17 @@ char sNumberChars[14] = "0123456789 <\xff";
 #define NMB_BAD_WORDS 10
 const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 {
-{0x84,0xb9,0x06,0x03,0x0d,0x48,0x52,0x7c,0xe0,0x5c,0x36,0x82,0x0f,0x94,0xc9,0xa3},
-{0x01,0x2e,0x3b,0x42,0x29,0xed,0x77,0x78,0x85,0x07,0x44,0xbb,0x32,0x7f,0xa5,0x54},
-{0x71,0xb4,0x74,0xfa,0x0a,0x68,0x85,0x32,0x55,0x2a,0x0a,0x95,0x46,0x4a,0x9a,0x00},
-{0x4f,0x79,0x1f,0x1f,0xc2,0xf1,0xbc,0x1a,0x86,0xab,0xc3,0x8d,0x46,0x78,0x9b,0x34},
-{0x00,0x94,0xcf,0x00,0x63,0x7a,0xee,0x49,0xb2,0x3c,0x4f,0x44,0xba,0xaf,0xe0,0xde},
-{0x4a,0x46,0x6a,0x30,0x2e,0x55,0xdd,0x2e,0x4e,0x8d,0xf6,0xde,0xa7,0xaa,0xc3,0x2f},
-{0xbe,0x97,0x62,0x73,0xca,0x31,0x79,0xad,0x77,0x72,0x63,0xfb,0x26,0xac,0x08,0xd4},
-{0x27,0x50,0xfe,0xdb,0xda,0x13,0x41,0xe9,0x84,0x2b,0xdd,0xb7,0x44,0xc8,0x62,0x03},
-{0xa0,0x15,0x4f,0x58,0xd6,0xa4,0x46,0x1c,0x9d,0x35,0x3d,0x04,0xd6,0x3d,0xb0,0x8b},
-{0xf7,0x3e,0x87,0x12,0x37,0x3e,0xba,0xab,0xa7,0xf8,0xb6,0x91,0xa1,0x92,0x24,0xeb}
+  {0x84, 0xb9, 0x06, 0x03, 0x0d, 0x48, 0x52, 0x7c, 0xe0, 0x5c, 0x36, 0x82, 0x0f, 0x94, 0xc9, 0xa3},
+  {0x01, 0x2e, 0x3b, 0x42, 0x29, 0xed, 0x77, 0x78, 0x85, 0x07, 0x44, 0xbb, 0x32, 0x7f, 0xa5, 0x54},
+  {0x71, 0xb4, 0x74, 0xfa, 0x0a, 0x68, 0x85, 0x32, 0x55, 0x2a, 0x0a, 0x95, 0x46, 0x4a, 0x9a, 0x00},
+  {0x4f, 0x79, 0x1f, 0x1f, 0xc2, 0xf1, 0xbc, 0x1a, 0x86, 0xab, 0xc3, 0x8d, 0x46, 0x78, 0x9b, 0x34},
+  {0x00, 0x94, 0xcf, 0x00, 0x63, 0x7a, 0xee, 0x49, 0xb2, 0x3c, 0x4f, 0x44, 0xba, 0xaf, 0xe0, 0xde},
+  {0x4a, 0x46, 0x6a, 0x30, 0x2e, 0x55, 0xdd, 0x2e, 0x4e, 0x8d, 0xf6, 0xde, 0xa7, 0xaa, 0xc3, 0x2f},
+  {0xbe, 0x97, 0x62, 0x73, 0xca, 0x31, 0x79, 0xad, 0x77, 0x72, 0x63, 0xfb, 0x26, 0xac, 0x08, 0xd4},
+  {0x27, 0x50, 0xfe, 0xdb, 0xda, 0x13, 0x41, 0xe9, 0x84, 0x2b, 0xdd, 0xb7, 0x44, 0xc8, 0x62, 0x03},
+  {0xa0, 0x15, 0x4f, 0x58, 0xd6, 0xa4, 0x46, 0x1c, 0x9d, 0x35, 0x3d, 0x04, 0xd6, 0x3d, 0xb0, 0x8b},
+  {0xf7, 0x3e, 0x87, 0x12, 0x37, 0x3e, 0xba, 0xab, 0xa7, 0xf8, 0xb6, 0x91, 0xa1, 0x92, 0x24, 0xeb}
 };
-
-/*
-  F("84b906030d48527ce05c36820f94c9a3"),
-  F("012e3b4229ed7778850744bb327fa554"),
-  F("71b474fa0a688532552a0a95464a9a00"),
-  F("4f791f1fc2f1bc1a86abc38d46789b34"),
-  F("0094cf00637aee49b23c4f44baafe0de"),
-  F("4a466a302e55dd2e4e8df6dea7aac32f"),
-  F("be976273ca3179ad777263fb26ac08d4"),
-  F("2750fedbda1341e9842bddb744c86203"),
-  F("a0154f58d6a4461c9d353d04d63db08b"),
-  F("f73e8712373ebaaba7f8b691a19224eb")
- */
 
 #include <EEPROM.h>
 
@@ -101,28 +93,28 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 #define EEPROM_SIZE 512
 
 #define EEPROM_SIGNATURE                    0 // 000-003  Signature 'LEGO'
-#define EEPROM_CLEAR_CHANNEL_THRESHHOLD                 4 // 004-005  iRED_CHANNEL_THRESHHOLD
-#define EEPROM_RED_CHANNEL_THRESHHOLD                 6 // 006-007  iRED_CHANNEL_THRESHHOLD
-#define EEPROM_BLUE_CHANNEL_THRESHHOLD                 8 // 008-009  iBLUE_CHANNEL_THRESHHOLD
-#define EEPROM_NUMBER_OF_LEGO_DNA          10 // 010-010  iNumberOfEEPROM
-#define EEPROM_LEGO_DNA                    11 // 011-511  LEGO_DNAs
+#define EEPROM_CLEAR_CHANNEL_THRESHHOLD     4 // 004-005  iRED_CHANNEL_THRESHHOLD
+#define EEPROM_RED_CHANNEL_THRESHHOLD       6 // 006-007  iRED_CHANNEL_THRESHHOLD
+#define EEPROM_BLUE_CHANNEL_THRESHHOLD      8 // 008-009  iBLUE_CHANNEL_THRESHHOLD
+#define EEPROM_REMOTE_LCD_SERIAL           10 // 010-010  bRemoteLCDSerial
+#define EEPROM_NUMBER_OF_LEGO_DNA          11 // 011-011  iNumberOfEEPROM
+#define EEPROM_LEGO_DNA                    12 // 012-511  LEGO_DNAs
 
-#define EEPROM_LEGO_DNA_MAX                10
+#define EEPROM_LEGO_DNA_MAX                5
 #define EEPROM_LEGO_DNA_ENTRY_SIZE         28
 
-//#define LEGO_DNA_MAX  24
-#define LEGO_DNA_MAX  16
+#define LEGO_DNA_MAX  8
 
 static int iNumberOfEEPROM = 0;
 
 #define NMB_LEGO_BRICKS 10
 
 int iBrickSequencing[NMB_LEGO_BRICKS][4];
-char sDNASequence[NMB_LEGO_BRICKS+1];
+char sDNASequence[NMB_LEGO_BRICKS + 1] = "";
 
 
 int iLEGO_DNA_Number = 7;
-char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS+1] =
+char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS + 1] =
 { "CCGGTTAACC",
   "ATTGGTCATT",
   "TGCTCCTACA",
@@ -132,7 +124,7 @@ char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS+1] =
   "CGTCTACCAA"
 };
 char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
-{ " CCGGTTAACC TEST",
+{ " YYRRBBGGYY TEST",
   "  MAKO SHARK    ",
   "  ABALONE       ",
   "  SQUID         ",
@@ -204,18 +196,26 @@ char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
   "  VERSION INFO  "
 };
 
-#define ADVANCED_NMB_OPS            4
+#define ADVANCED_NMB_OPS            8
 
 #define ADVANCED_OP_CANCEL          0
 #define ADVANCED_OP_CLEAR_CHANNEL   1
 #define ADVANCED_OP_RED_CHANNEL     2
 #define ADVANCED_OP_BLUE_CHANNEL    3
+#define ADVANCED_OP_AUTO_CHANNEL    4
+#define ADVANCED_OP_REMOTE_LCD_ON   5
+#define ADVANCED_OP_REMOTE_LCD_OFF  6
+#define ADVANCED_OP_REBOOT          7
 
 char sAdvancedOp[ADVANCED_NMB_OPS][17] =
 { "  CANCEL        ",
   "  CLEAR CHANNEL ",
   "  RED CHANNEL   ",
-  "  BLUE CHANNEL  "
+  "  BLUE CHANNEL  ",
+  "  AUTO CHANNEL  ",
+  "  REMOTE LCD ON ",
+  "  REMOTE LCD OFF",
+  "  REBOOT        "
 };
 
 
@@ -250,9 +250,12 @@ static int iBLUE_CHANNEL_THRESHHOLD = BLUE_CHANNEL_THRESHHOLD;
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  
+#if DEBUG_OUTPUT
   Serial.println();
   Serial.println(PROGRAM);
   Serial.println(VERSION);
+#endif
 
   pinMode(BUZZER, OUTPUT); //initialize the buzzer pin as an output
 
@@ -271,7 +274,9 @@ void setup() {
   digitalWrite (LED_TCS34725, LOW);
 
   if (tcs.begin()) {
+#if DEBUG_OUTPUT
     Serial.println(F("Found sensor"));
+#endif    
     // LED off to prevent overheating
     tcs.setInterrupt(true);
 
@@ -296,18 +301,27 @@ void setup() {
   StartSequencer();
 #endif
 
-for (int i=0; i<128; i++)
-{
-  int iByte = EEPROM[i];
-  if (i % 16 == 0)
-    Serial.println("");
-  if (iByte < 16)
-    Serial.print(F("0"));
-  Serial.print(iByte, HEX);
-  Serial.print(F(" "));
-}
-Serial.println("");
+#if DEBUG_OUTPUT
+  for (int i = 0; i < 128; i++)
+  {
+    int iByte = EEPROM[i];
+    if (i % 16 == 0)
+      Serial.println("");
+    if (iByte < 16)
+      Serial.print(F("0"));
+    Serial.print(iByte, HEX);
+    Serial.print(F(" "));
+  }
+  Serial.println("");
+#endif
 
+  LoadEEPROM();
+  
+  Beeps(3, 10, 200);  // 3 Beeps, 10MS ON, 200MS OFF
+}
+
+void LoadEEPROM()
+{
   if (EEPROM[EEPROM_SIGNATURE + 0] == 'L' &&
       EEPROM[EEPROM_SIGNATURE + 1] == 'E' &&
       EEPROM[EEPROM_SIGNATURE + 2] == 'G' &&
@@ -316,7 +330,7 @@ Serial.println("");
     iCLEAR_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD);
     iRED_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD);
     iBLUE_CHANNEL_THRESHHOLD = readUnsignedIntFromEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD);
-    
+    bRemoteLCDSerial= EEPROM[EEPROM_REMOTE_LCD_SERIAL];
     iNumberOfEEPROM = EEPROM[EEPROM_NUMBER_OF_LEGO_DNA];
 
     int index;
@@ -333,15 +347,16 @@ Serial.println("");
         sLEGO_DNA_Name[iLEGO_DNA_Number][i] = EEPROM[iOffset];
         iOffset = iOffset + 1;
       }
-Serial.println(F("EEPROM Data"));
-Serial.print(F("Index "));
-Serial.print(iLEGO_DNA_Number);
-Serial.print(F(" ["));
-Serial.print(&sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
-Serial.print(F("] ["));
-Serial.print(&sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
-Serial.println(F("]"));
-      
+#if DEBUG_OUTPUT
+      Serial.println(F("EEPROM Data"));
+      Serial.print(F("Index "));
+      Serial.print(iLEGO_DNA_Number);
+      Serial.print(F(" ["));
+      Serial.print(&sLEGO_DNA_Sequence[iLEGO_DNA_Number][0]);
+      Serial.print(F("] ["));
+      Serial.print(&sLEGO_DNA_Name[iLEGO_DNA_Number][0]);
+      Serial.println(F("]"));
+#endif
       iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
     }
   }
@@ -354,6 +369,8 @@ Serial.println(F("]"));
   }
 #if DEBUG_OUTPUT
   Serial.println(F("EEPROM LEGO found"));
+  Serial.print(F("bRemoteLCDSerial = "));
+  Serial.println(bRemoteLCDSerial);
   Serial.print(F("iNumberOfEEPROM = "));
   Serial.println(iNumberOfEEPROM);
   Serial.print(F("Clear Channel Threshhold = "));
@@ -362,13 +379,11 @@ Serial.println(F("]"));
   Serial.println(iRED_CHANNEL_THRESHHOLD);
   Serial.print(F("Blue  Channel Threshhold = "));
   Serial.println(iBLUE_CHANNEL_THRESHHOLD);
-#endif
-
-  Beeps(3, 10, 200);  // 3 Beeps, 10MS ON, 200MS OFF
+#endif  
 }
 
 void writeUnsignedIntIntoEEPROM(int address, unsigned int number)
-{ 
+{
   EEPROM[address] = number >> 8;
   EEPROM[address + 1] = number & 0xFF;
 }
@@ -387,15 +402,23 @@ void SetupEEPROM()
   writeUnsignedIntIntoEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD, iCLEAR_CHANNEL_THRESHHOLD);
   writeUnsignedIntIntoEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD);
   writeUnsignedIntIntoEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD, iBLUE_CHANNEL_THRESHHOLD);
+  EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
   EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
+  
 
 #if DEBUG_OUTPUT
   Serial.println(F("EEPROM LEGO initialized"));
 #endif
 
 }
-void UpdateLCD(char cColor)
+void UpdateLCD(char cColor, int index)
 {
+  char lcd1[17] = "Sequencing DNA  ";
+  char lcd2[17] = "                ";
+  lcd2[index] = cColor;
+  for(int i=0; i<index; i++)
+    lcd2[i] = sDNASequence[i];
+  RemoteLCDSerial(lcd1, lcd2);
   lcd.print(cColor);
 }
 
@@ -411,13 +434,8 @@ char GetLEGOColor(int index)
   iBrickSequencing[index][1] = g;
   iBrickSequencing[index][2] = b;
   iBrickSequencing[index][3] = c;
-  
-#if 0
-  Serial.print(F("Red: ")); Serial.print(r, DEC); Serial.print(F(" "));
-  Serial.print(F("Green: ")); Serial.print(g, DEC); Serial.print(F(" "));
-  Serial.print(F("Blue: ")); Serial.print(b, DEC); Serial.print(F(" "));
-  Serial.print(F("Color: ")); Serial.print(c, DEC); Serial.print(F(" "));
-#else
+
+#if DEBUG_OUTPUT
   Serial.print(iStepPosition, DEC); Serial.print(F(","));
   Serial.print(r, DEC); Serial.print(F(","));
   Serial.print(g, DEC); Serial.print(F(","));
@@ -425,36 +443,40 @@ char GetLEGOColor(int index)
   Serial.print(c, DEC); Serial.print(F(","));
 #endif
 
-
-
   if (c >= iCLEAR_CHANNEL_THRESHHOLD)
   {
-    UpdateLCD(YELLOW);
+    UpdateLCD(YELLOW, index);
     cRetcode = YELLOW;
+#if DEBUG_OUTPUT
     Serial.println(F("Y,C"));
+#endif    
   }
-  else
-  if (r >= iRED_CHANNEL_THRESHHOLD)
+  else if (r >= iRED_CHANNEL_THRESHHOLD)
   {
-    UpdateLCD(RED);
+    UpdateLCD(RED, index);
     cRetcode = RED;
+#if DEBUG_OUTPUT
     Serial.println(F("R,G"));
+#endif    
   }
-  else
-  if (b >= iBLUE_CHANNEL_THRESHHOLD)
-  {  
-    UpdateLCD(BLUE);
-    cRetcode = BLUE;
-    Serial.println(F("B,T"));
-  }
-  else
-  /* if (g > b && g > r) */
+  else if (b >= iBLUE_CHANNEL_THRESHHOLD)
   {
-    UpdateLCD(GREEN);
+    UpdateLCD(BLUE, index);
+    cRetcode = BLUE;
+#if DEBUG_OUTPUT
+    Serial.println(F("B,T"));
+#endif    
+  }
+  else
+    /* if (g > b && g > r) */
+  {
+    UpdateLCD(GREEN, index);
     cRetcode = GREEN;
-    Serial.println(F("G,A"));    
-  }  
-  
+#if DEBUG_OUTPUT
+    Serial.println(F("G,A"));
+#endif    
+  }
+
   return (cRetcode);
 }
 
@@ -462,13 +484,14 @@ void StartSequencer()
 {
   lcd.setCursor(0, 0);
   lcd.print(F("LEGO DNA Sqncr  "));
-
   lcd.setCursor(0, 1);
   lcd.print(F(" Push Button    "));
+  F_RemoteLCDSerial(F("LEGO DNA Sqncr  "),F(" Push Button    "));
 }
 
 void help()
 {
+#if DEBUG_OUTPUT
   Serial.println(F("Command Line Mode:"));
   Serial.println(F("  Lxxxx to go Left  xxxx steps"));
   Serial.println(F("  Rxxxx to go Right xxxx steps"));
@@ -481,6 +504,7 @@ void help()
   Serial.println(F("  A Automated Sequencer"));
   Serial.println(F("  E to Start Sequencer"));
   Serial.println(F("  Z zero out added DNAs"));
+#endif  
 }
 
 bool GetButtonPressed()
@@ -489,7 +513,7 @@ bool GetButtonPressed()
   int btnState = digitalRead(SW);
 
   //If we detect LOW signal, button is pressed
-  if (btnState == LOW) 
+  if (btnState == LOW)
   {
     //if 50ms have passed since last LOW pulse, it means that the
     //button has been pressed, released and pressed again
@@ -501,7 +525,7 @@ bool GetButtonPressed()
     // Wait for button to be released
     while (digitalRead(SW) == LOW)
       ;
-      
+
     // Remember last button press event
     lastButtonPress = millis();
     return (true);
@@ -513,15 +537,30 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
 {
   bool bResponse = bInitialResponse;
 
+  char lcd1[17] = "                ";
+  char lcd2[17];
+  strncpy(lcd1, sQuestion, strlen(sQuestion));
+  
   lcd.setCursor(0, 0);
   lcd.print(F("                "));
   lcd.setCursor(0, 0);
   lcd.print(sQuestion);
   lcd.setCursor(0, 1);
   if (bInitialResponse == false)
+  {
     lcd.print(F("[NO]  YES       "));
+    strcpy(lcd2,"[NO]  YES       ");
+  }
   else
+  {
     lcd.print(F(" NO  [YES]      "));
+    strcpy(lcd2," NO  [YES]      ");
+  }
+  if (bRemoteLCDSerial)
+  {
+    delay(500);
+    RemoteLCDSerial(lcd1, lcd2);
+  }
 
   while (GetButtonPressed() == false)
   {
@@ -534,6 +573,7 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
         {
           lcd.setCursor(0, 1);
           lcd.print(F("[NO]  YES       "));
+          strcpy(lcd2,"[NO]  YES       ");
         }
         bResponse = false;
       }
@@ -543,10 +583,16 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
         {
           lcd.setCursor(0, 1);
           lcd.print(F(" NO  [YES]      "));
+          strcpy(lcd2," NO  [YES]      ");
         }
         bResponse = true;
       }
-    }
+      if (bRemoteLCDSerial)
+      {
+        delay(500);
+        RemoteLCDSerial(lcd1, lcd2);
+      }
+   }
   }
   while (digitalRead(SW) == LOW)
     ;
@@ -555,28 +601,29 @@ bool GetYesOrNo(bool bInitialResponse, char *sQuestion)
 }
 
 ///////////////////////////////////////////////
-int GetNumber(int iCurrentValue, char *iName)
+int GetNumber(int iCurrentValue, char *iName, int iOffsetEEPROM)
 {
-  Serial.println(F("GetNumber!"));
   lcd.setCursor(0, 0);
-  lcd.print(F("                "));
-  lcd.setCursor(0, 0);
-  lcd.print("Enter ");
+  lcd.print(F("Enter "));
   lcd.write((byte) 0xff);
-  lcd.print(F(" to end "));
+  lcd.print(F(" to end  "));
   lcd.setCursor(0, 1);
   lcd.print(F("                "));
   lcd.setCursor(0, 1);
   lcd.print(iName);
   lcd.print(F("="));
 
+  int iOffset = strlen(iName) + 1;
   char sNewNumber[5] = "";
   char cNextChar;
 
-  int index = 0;
-  while (index < 4)
+  sprintf(sNewNumber, "%d", iCurrentValue);
+  lcd.print(sNewNumber);
+
+  int index = strlen(sNewNumber);
+  while (index < 5)
   {
-    cNextChar = GetNextChar(index);
+    cNextChar = GetNextNumber(index + iOffset);
     if (cNextChar == '\0')
     {
       break;
@@ -585,7 +632,7 @@ int GetNumber(int iCurrentValue, char *iName)
     {
       if (index > 0)
       {
-        lcd.setCursor(index, 1);
+        lcd.setCursor(index + iOffset, 1);
         lcd.print(' ');
         index = index - 1;
         continue;
@@ -595,18 +642,30 @@ int GetNumber(int iCurrentValue, char *iName)
     index = index + 1;
     sNewNumber[index] = '\0';
   }
-  for (; index < 4; index++)
-  {
-    sNewNumber[index] = ' ';
-  }
-  sNewNumber[4] = '\0';
-  Serial.println(sNewNumber);
 
-  if (strcmp(sNewNumber, "    ") != 0)
-  if (GetYesOrNo(false, sNewNumber))
+  if (strlen(sNewNumber) != 0)
   {
-//    if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
+    int iValue = 0;
+    for (int i = 0; i < 4; i++)
+    {
+      if (sNewNumber[i] == '\0')
+        break;
+      iValue = (iValue * 10) + (sNewNumber[i] - '0');
+    }
+    if (iValue != iCurrentValue)
+    {
+      char sTemp[17] = "SET ";
+      strcat(sTemp, iName);
+      strcat(sTemp, "=");
+      strcat(sTemp, sNewNumber);
+      if (GetYesOrNo(false, sTemp))
+      {
+        writeUnsignedIntIntoEEPROM(iOffsetEEPROM, iValue);
+        return (iValue);
+      }
+    }
   }
+  return (-1);
 }
 ///////////////////////////////////////////////
 
@@ -670,11 +729,11 @@ void loop()
           case 'Z':
             iNumberOfEEPROM = 0;
             iLEGO_DNA_Number = 6;
-            for (int i=0; i<512; i++)
+            for (int i = 0; i < 512; i++)
               EEPROM[i] = '\0';
             SetupEEPROM();
             break;
-            
+
           case 'E':
             StartSequencer();
             iState = STATE_START;
@@ -746,14 +805,14 @@ void loop()
     }
     return;
   }
-#endif  
+#endif
 
   if (iState == STATE_START)
   {
     if (GetButtonPressed())
     {
-//      while (digitalRead(SW) == LOW)
-//        ;
+      //      while (digitalRead(SW) == LOW)
+      //        ;
       iState = STATE_LOAD_TRAY;
     }
     else
@@ -764,18 +823,18 @@ void loop()
 
   if (iState == STATE_LOAD_TRAY)
   {
+    F_RemoteLCDSerial(F("Load LEGO Tray  "), F(" Push Button    ")); 
     lcd.setCursor(0, 0);
     lcd.print(F("Load LEGO Tray  "));
-
-    Beeps(1, 5, 0);  // 1 Beep, 5MS ON, 0MS OFF    
-
     lcd.setCursor(0, 1);
     lcd.print(F(" Push Button    "));
+
+    Beeps(1, 5, 0);  // 1 Beep, 5MS ON, 0MS OFF
 
     while (GetButtonPressed() == false)
     {
       if (CheckRotaryEncoder())
-      {        
+      {
         lcd.setCursor(0, 0);
         lcd.print(F("Select Option:  "));
 
@@ -810,60 +869,69 @@ void loop()
         switch (iMaintenanceOp)
         {
           case MAINTENANCE_OP_CANCEL:
-Serial.println(F("Cancel"));
+#if DEBUG_OUTPUT
+            Serial.println(F("Cancel"));
+#endif            
             StartSequencer();
             iState = STATE_START;
-#if DEBUG_MODE            
+#if DEBUG_MODE
             bCommandLineMode = false;
-#endif            
+#endif
             break;
 
 #if DEBUG_MODE
           case MAINTENANCE_OP_COMMAND_LINE:
-Serial.println(F("Enter Command Line Mode"));
+            Serial.println(F("Enter Command Line Mode"));
             bCommandLineMode = true;
             break;
-#endif            
+#endif
 
           case MAINTENANCE_OP_UNLOAD_TRAY:
-Serial.println(F("Unload Tray"));
+#if DEBUG_OUTPUT
+            Serial.println(F("Unload Tray"));
+#endif            
             myStepper.step(-4000);
             iStepPosition = 0;
             break;
-            
+
           case MAINTENANCE_OP_LOAD_TRAY:
-Serial.println(F("Load Tray"));
+#if DEBUG_OUTPUT
+            Serial.println(F("Load Tray"));
+#endif            
             myStepper.step(1640);
             iStepPosition = 0;
             break;
 
           case MAINTENANCE_OP_POSITION_TRAY:
+#if DEBUG_OUTPUT
+            Serial.println(F("Position Tray"));
+#endif            
             {
-             int iCounter = iRotaryEncoder_Counter;
+              int iCounter = iRotaryEncoder_Counter;
               while (GetButtonPressed() == false)
               {
                 if (CheckRotaryEncoder())
                 {
-#if DEBUG_OUTPUT                
-Serial.print(F("iCounter = "));
-Serial.print(iCounter);
-Serial.print(F("  iRotaryEncoder_Counter = "));
-Serial.println(iRotaryEncoder_Counter);
-#endif                  
+#if DEBUG_OUTPUT
+                  Serial.print(F("iCounter = "));
+                  Serial.print(iCounter);
+                  Serial.print(F("  iRotaryEncoder_Counter = "));
+                  Serial.println(iRotaryEncoder_Counter);
+#endif
                   if (iRotaryEncoder_Counter > iCounter)
                     MoveTray(50);
                   else
                     MoveTray(-50);
                   iCounter = iRotaryEncoder_Counter;
                 }
-              }              
+              }
             }
             break;
-        
+
           case MAINTENANCE_OP_ZERO_NEW_DNA:
             iNumberOfEEPROM = 0;
             iLEGO_DNA_Number = 6;
-            for (int i=EEPROM_NUMBER_OF_LEGO_DNA; i<512; i++)
+            for (int i = EEPROM_NUMBER_OF_LEGO_DNA; i < 512; i++)
               EEPROM[i] = '\0';
             SetupEEPROM();
             break;
@@ -877,25 +945,25 @@ Serial.println(iRotaryEncoder_Counter);
             break;
 
           case MAINTENANCE_OP_ADVANCED:
-////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////////
 
             while (GetButtonPressed() == false)
             {
-              //if (CheckRotaryEncoder())
-              {        
+              while (true)
+              {
                 lcd.setCursor(0, 0);
                 lcd.print(F("Select Option:  "));
-        
+
                 int iAdvancedOp = ADVANCED_OP_CANCEL;
-        
+
                 while (true)
                 {
                   lcd.setCursor(0, 1);
                   lcd.print(sAdvancedOp[iAdvancedOp]);
-        
+
                   if (GetButtonPressed())
                     break;
-        
+
                   int iCounter = iRotaryEncoder_Counter;
                   if (CheckRotaryEncoder())
                   {
@@ -909,66 +977,112 @@ Serial.println(iRotaryEncoder_Counter);
                     {
                       iAdvancedOp--;
                       if (iAdvancedOp < 0)
-                        iAdvancedOp = ADVANCED_OP_BLUE_CHANNEL;
+                        iAdvancedOp = ADVANCED_OP_REBOOT;
                     }
                   }
                 }
-        
+
+                int iResult;
                 switch (iAdvancedOp)
                 {
                   case ADVANCED_OP_CANCEL:
-        Serial.println(F("Cancel"));
-                    //return;
-                    break;
-        
-                  case ADVANCED_OP_CLEAR_CHANNEL:
-                    lcd.setCursor(0, 0);
-                    lcd.print(F("CLEAR CHANNEL   "));            
-                    lcd.setCursor(0, 1);
-                    lcd.print(F("                "));            
-                    lcd.setCursor(0, 1);
-                    lcd.print(iCLEAR_CHANNEL_THRESHHOLD);
-                    while (GetButtonPressed() == false &&
-                           CheckRotaryEncoder() == false)
-                    {
-                      delay(100);
-                    }
+                    return;
 
-                    GetNumber(iCLEAR_CHANNEL_THRESHHOLD, "CLEAR");
-                    
+                  case ADVANCED_OP_CLEAR_CHANNEL:
+                    iResult = GetNumber(iCLEAR_CHANNEL_THRESHHOLD, "CLEAR", EEPROM_CLEAR_CHANNEL_THRESHHOLD);
+                    if (iResult > 0)
+                      iCLEAR_CHANNEL_THRESHHOLD = iResult;
                     break;
-        
+
                   case ADVANCED_OP_RED_CHANNEL:
+                    iResult = GetNumber(iRED_CHANNEL_THRESHHOLD, "RED", EEPROM_RED_CHANNEL_THRESHHOLD);
+                    if (iResult > 0)
+                      iRED_CHANNEL_THRESHHOLD = iResult;
                     break;
-        
+
                   case ADVANCED_OP_BLUE_CHANNEL:
+                    iResult = GetNumber(iBLUE_CHANNEL_THRESHHOLD, "BLUE", EEPROM_BLUE_CHANNEL_THRESHHOLD);
+                    if (iResult > 0)
+                      iBLUE_CHANNEL_THRESHHOLD = iResult;
                     break;
-        
-/*
-                  case MAINTENANCE_OP_VERSION_INFO:
-                    lcd.setCursor(0, 0);
-                    lcd.print(PROGRAM_SHORT);            
-                    lcd.setCursor(0, 1);
-                    lcd.print(VERSION_SHORT);
-                    while (GetButtonPressed() == false &&
-                           CheckRotaryEncoder() == false)
+
+                  case ADVANCED_OP_AUTO_CHANNEL:
+                    if (sDNASequence[0] == '\0')
                     {
-                      delay(100);
+                      lcd.setCursor(0, 0);
+                      lcd.print(F("SCAN TEST LEGOS!"));
+                      lcd.setCursor(0, 1);
+                      lcd.print(F("PUSH BUTTON     "));
+                      while (GetButtonPressed() == false)
+                      {
+                        delay(100);
+                      }
+                      break;
+                    }
+                    if (GetYesOrNo(false, "SCAN YYRRBBGGYY?"))
+                    {
+                      char sTemp[17] = "";
+                      sprintf(sTemp,"C%d R%d B%d",iCLEAR_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD,iBLUE_CHANNEL_THRESHHOLD);
+                      lcd.setCursor(0, 0);
+                      lcd.print(F("CURRENT CHANNELS"));
+                      lcd.setCursor(0, 1);
+                      lcd.print(F("                "));
+                      lcd.setCursor(0, 1);
+                      lcd.print(sTemp);
+                      while (GetButtonPressed() == false)
+                      {
+                        delay(100);
+                      }
+                      int iClear = iBrickSequencing[0][3];
+                      int iRed = iBrickSequencing[2][0];
+                      int iBlue = iBrickSequencing[4][2];
+                      if (iBrickSequencing[1][3] < iClear)
+                        iClear = iBrickSequencing[1][3];
+                      if (iBrickSequencing[3][0] < iRed)
+                        iRed = iBrickSequencing[3][0];
+                      if (iBrickSequencing[5][2] < iBlue)
+                        iBlue = iBrickSequencing[5][2];
+                      iClear = iClear - ((iClear * 1)/10);
+                      iRed = iRed - ((iRed * 1)/10);
+                      iBlue = iBlue - ((iBlue * 1)/10);
+                      sprintf(sTemp,"C%d R%d B%d?", iClear, iRed, iBlue);
+                      if (GetYesOrNo(false, sTemp))
+                      {
+                        iCLEAR_CHANNEL_THRESHHOLD = iClear;
+                        iRED_CHANNEL_THRESHHOLD = iRed;
+                        iBLUE_CHANNEL_THRESHHOLD = iBlue;
+                        writeUnsignedIntIntoEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD, iCLEAR_CHANNEL_THRESHHOLD);
+                        writeUnsignedIntIntoEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD);
+                        writeUnsignedIntIntoEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD, iBLUE_CHANNEL_THRESHHOLD);
+                      }
                     }
                     break;
-*/                    
-                 }
-                
-                return;
+
+                  case ADVANCED_OP_REMOTE_LCD_ON:
+                    bRemoteLCDSerial = true;
+                    EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
+                    re_set();
+                    break;
+
+                  case ADVANCED_OP_REMOTE_LCD_OFF:
+                    bRemoteLCDSerial = false;
+                    EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
+                    re_set();
+                    break;
+
+                  case ADVANCED_OP_REBOOT:
+                    re_set();
+                    break;      
+                }
               }
             }
 
-////////////////////////////////////////////////////////////////////////////////////////////          
+            ////////////////////////////////////////////////////////////////////////////////////////////
             break;
-            
+
           case MAINTENANCE_OP_VERSION_INFO:
             lcd.setCursor(0, 0);
-            lcd.print(PROGRAM_SHORT);            
+            lcd.print(PROGRAM_SHORT);
             lcd.setCursor(0, 1);
             lcd.print(VERSION_SHORT);
             while (GetButtonPressed() == false &&
@@ -977,8 +1091,8 @@ Serial.println(iRotaryEncoder_Counter);
               delay(100);
             }
             break;
-         }
-        
+        }
+
         return;
       }
     }
@@ -987,9 +1101,10 @@ Serial.println(iRotaryEncoder_Counter);
 
   lcd.setCursor(0, 0);
   lcd.print(F("Sequencing DNA  "));
-
   lcd.setCursor(0, 1);
   lcd.print(F("                "));
+
+  F_RemoteLCDSerial(F("Sequencing DNA  "),F("                "));
 
   lcd.setCursor(0, 1);
 
@@ -1001,12 +1116,14 @@ Serial.println(iRotaryEncoder_Counter);
   myStepper.setSpeed(10);
   iStepPosition = 0;
   MoveTray(460);
-  
+
   sDNASequence[NMB_LEGO_BRICKS] = '\0';
 
+#if DEBUG_OUTPUT
   Serial.println("");
   Serial.println(F("---------- CSV ----------"));
-  Serial.println(F("P,R,G,B,Y,M,DNA"));  
+  Serial.println(F("P,R,G,B,Y,M,DNA"));
+#endif
 
   for (int i = 0; i < NMB_LEGO_BRICKS; i++)
   {
@@ -1038,24 +1155,31 @@ Serial.println(iRotaryEncoder_Counter);
       lcd.setCursor(0, 0);
       lcd.print(F("Unloading tray  "));
 
+      char lcd1[17] = "Unloading tray  ";
+      char lcd2[17] = "                ";
+      for(int i=0; i<NMB_LEGO_BRICKS; i++)
+        lcd2[i] = sDNASequence[i];
+      RemoteLCDSerial(lcd1, lcd2);       
+
       Beeps(2, 5, 250);  // 2 Beeps, 5MS ON, 250MS OFF
 
       myStepper.setSpeed(15);
       MoveTray(-5410);
 
-      Serial.print("[");
+#if DEBUG_MODE
+      Serial.print(F("["));
       Serial.print(sDNASequence);
-      Serial.println("]");
-      for (int i=0; i<NMB_LEGO_BRICKS; i++)
+      Serial.println(F("]"));
+      for (int i = 0; i < NMB_LEGO_BRICKS; i++)
       {
-        for (int j=0; j<4; j++)
+        for (int j = 0; j < 4; j++)
         {
           Serial.print(iBrickSequencing[i][j]);
-          Serial.print(" ");
+          Serial.print(F(" "));
         }
         Serial.println("");
       }
-      
+#endif
       myStepper.setSpeed(10);
       iState = STATE_LOAD_TRAY;
 
@@ -1069,8 +1193,8 @@ Serial.println(iRotaryEncoder_Counter);
         lcd.setCursor(0, 1);
         lcd.print(F("  PUSH BUTTON   "));
 
-        Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF        
-        
+        Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF
+
         while (GetButtonPressed() == false)
           ;
       }
@@ -1082,14 +1206,19 @@ Serial.println(iRotaryEncoder_Counter);
           if (strcmp(sDNASequence, sLEGO_DNA_Sequence[index]) == 0)
             break;
         }
-  
+
         if (index < iLEGO_DNA_Number)
         {
           lcd.setCursor(0, 0);
           lcd.print(F("Successful match"));
           lcd.setCursor(0, 1);
           lcd.print(sLEGO_DNA_Name[index]);
-          
+
+          char lcd1[17] = "Successful match";
+          char lcd2[17] = "";
+          strcpy(lcd2, sLEGO_DNA_Name[index]);
+          RemoteLCDSerial(lcd1, lcd2);                
+
           Beeps(3, 5, 200);  // 3 Beeps, 5MS ON, 200MS OFF
         }
         else
@@ -1098,28 +1227,29 @@ Serial.println(iRotaryEncoder_Counter);
           lcd.print(F("DNA not a match "));
           lcd.setCursor(0, 1);
           lcd.print(F("  UNKNOWN DNA!  "));
-  
+          F_RemoteLCDSerial(F("DNA not a match "), F("  UNKNOWN DNA!  "));                
+
           Beeps(4, 10, 200);  // 4 Beeps, 10MS ON, 200MS OFF
         }
-      
+
         while (GetButtonPressed() == false)
           ;
-  
+
         if (index >= iLEGO_DNA_Number)
         {
           if (GetYesOrNo(false, "Add to Database?"))
           {
+#if DEBUG_OUTPUT
             Serial.println(F("Add to Database!"));
+#endif            
             lcd.setCursor(0, 0);
-            lcd.print(F("Name:  "));
-            lcd.write((byte) 0xff);
-            lcd.print(F(" to end "));
+            lcd.print(F("Name:  \xff to end "));
             lcd.setCursor(0, 1);
             lcd.print(F("                "));
-  
+
             char sNewName[17] = "";
             char cNextChar;
-  
+
             int index = 0;
             while (index < 16)
             {
@@ -1147,91 +1277,93 @@ Serial.println(iRotaryEncoder_Counter);
               sNewName[index] = ' ';
             }
             sNewName[16] = '\0';
-            Serial.println(sNewName);
-  
+
             if (strcmp(sNewName, "                ") != 0)
-            if (GetYesOrNo(false, sNewName))
-            {
-              if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
+              if (GetYesOrNo(false, sNewName))
               {
-                lcd.setCursor(0, 0);
-                lcd.print(F("EEPROM DB full! "));
-                lcd.setCursor(0, 1);
-                lcd.print(F(" Push Button    "));
-  
-                while (GetButtonPressed() == false)
-                  ;
-              }
-              else
-              {
-                Serial.print(F("Adding to Database ["));
-                Serial.print(sDNASequence);
-                Serial.print(F("] = ["));
-                Serial.print(sNewName);
-                Serial.println(F("]"));
-  
-                // Check for Bad Word
-                bool bBadWord = false;
-                for (int i=0; i<NMB_BAD_WORDS; i++)
-                {
-                  char sQuad[5] = "    ";
-                  for (int j=0; j<13; j++)
-                  {
-                    int k;
-                    strncpy(sQuad, &sNewName[j], 4);                
-                    //generate the MD5 hash for our string
-                    unsigned char* hash=MD5::make_hash(sQuad);
-                    
-                    for (k=0; k<16; k++)
-                    {
-                      if (hash[k] == ucBadWords[i][k])
-                        continue;
-                      break;
-                    }
-                    if (k == 16)
-                      bBadWord = true;                  
-                    free(hash);
-                    if (bBadWord)
-                      break;
-                  }
-                  if (bBadWord)
-                    break;
-                }
-                if (bBadWord)
+                if (iNumberOfEEPROM >= (EEPROM_LEGO_DNA_MAX - 1))
                 {
                   lcd.setCursor(0, 0);
-                  lcd.print(F("Bad Word in Name"));
+                  lcd.print(F("EEPROM DB full! "));
                   lcd.setCursor(0, 1);
                   lcd.print(F(" Push Button    "));
-  Serial.println(F("BAD WORD!"));                
+
                   while (GetButtonPressed() == false)
                     ;
                 }
                 else
                 {
-                  // Now add to DATABASE
-                  int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
-                  for (int i = 0; i <= 11; i++)
+#if DEBUG_OUTPUT
+                  Serial.print(F("Adding to Database ["));
+                  Serial.print(sDNASequence);
+                  Serial.print(F("] = ["));
+                  Serial.print(sNewName);
+                  Serial.println(F("]"));
+#endif
+                  // Check for Bad Word
+                  bool bBadWord = false;
+                  for (int i = 0; i < NMB_BAD_WORDS; i++)
                   {
-                    sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
-                    EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
-                    iOffset = iOffset + 1;
+                    char sQuad[5] = "    ";
+                    for (int j = 0; j < 13; j++)
+                    {
+                      int k;
+                      strncpy(sQuad, &sNewName[j], 4);
+                      //generate the MD5 hash for our string
+                      unsigned char* hash = MD5::make_hash(sQuad);
+
+                      for (k = 0; k < 16; k++)
+                      {
+                        if (hash[k] == ucBadWords[i][k])
+                          continue;
+                        break;
+                      }
+                      if (k == 16)
+                        bBadWord = true;
+                      free(hash);
+                      if (bBadWord)
+                        break;
+                    }
+                    if (bBadWord)
+                      break;
                   }
-                  iOffset = iOffset - 1;
-                  for (int i = 0; i <= 17; i++)
+                  if (bBadWord)
                   {
-                    sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
-                    EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
-                    iOffset = iOffset + 1;
+                    lcd.setCursor(0, 0);
+                    lcd.print(F("Bad Word in Name"));
+                    lcd.setCursor(0, 1);
+                    lcd.print(F(" Push Button    "));
+#if DEBUG_OUTPUT
+                    Serial.println(F("BAD WORD!"));
+#endif                    
+                    while (GetButtonPressed() == false)
+                      ;
                   }
-    
-                  iNumberOfEEPROM = iNumberOfEEPROM + 1;
-                  EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
-  
-                  iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+                  else
+                  {
+                    // Now add to DATABASE
+                    int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
+                    for (int i = 0; i <= 11; i++)
+                    {
+                      sLEGO_DNA_Sequence[iLEGO_DNA_Number][i] = sDNASequence[i];
+                      EEPROM[EEPROM_LEGO_DNA + iOffset] = sDNASequence[i];
+                      iOffset = iOffset + 1;
+                    }
+                    iOffset = iOffset - 1;
+                    for (int i = 0; i <= 17; i++)
+                    {
+                      sLEGO_DNA_Name[iLEGO_DNA_Number][i] = sNewName[i];
+                      EEPROM[EEPROM_LEGO_DNA + iOffset] = sNewName[i];
+                      iOffset = iOffset + 1;
+                    }
+
+                    iNumberOfEEPROM = iNumberOfEEPROM + 1;
+                    EEPROM[EEPROM_NUMBER_OF_LEGO_DNA] = iNumberOfEEPROM;
+
+                    iLEGO_DNA_Number = iLEGO_DNA_Number + 1;
+                  }
                 }
               }
-            }
           }
         }
       }
@@ -1242,8 +1374,8 @@ Serial.println(iRotaryEncoder_Counter);
 
 char GetNextChar(int index)
 {
-  int iCurrentCharIndex = NMB_NAME_CHARS-1;
-  char cCurrentChar = sNameChars[NMB_NAME_CHARS-1];
+  int iCurrentCharIndex = NMB_NAME_CHARS - 1;
+  char cCurrentChar = sNameChars[NMB_NAME_CHARS - 1];
 
   lcd.setCursor(index, 1);
   lcd.print(cCurrentChar);
@@ -1265,7 +1397,7 @@ char GetNextChar(int index)
         {
           iCurrentCharIndex = iCurrentCharIndex - (iCurrentCounter - iRotaryEncoder_Counter);
           if (iCurrentCharIndex < 0)
-            iCurrentCharIndex = NMB_NAME_CHARS-1;
+            iCurrentCharIndex = NMB_NAME_CHARS - 1;
         }
         lcd.setCursor(index, 1);
         cCurrentChar = sNameChars[iCurrentCharIndex];
@@ -1281,8 +1413,8 @@ char GetNextChar(int index)
 
 char GetNextNumber(int index)
 {
-  int iCurrentCharIndex = NMB_NUMBER_CHARS-1;
-  char cCurrentChar = sNameChars[NMB_NUMBER_CHARS-1];
+  int iCurrentCharIndex = NMB_NUMBER_CHARS - 1;
+  char cCurrentChar = sNumberChars[NMB_NUMBER_CHARS - 1];
 
   lcd.setCursor(index, 1);
   lcd.print(cCurrentChar);
@@ -1304,10 +1436,10 @@ char GetNextNumber(int index)
         {
           iCurrentCharIndex = iCurrentCharIndex - (iCurrentCounter - iRotaryEncoder_Counter);
           if (iCurrentCharIndex < 0)
-            iCurrentCharIndex = NMB_NUMBER_CHARS-1;
+            iCurrentCharIndex = NMB_NUMBER_CHARS - 1;
         }
         lcd.setCursor(index, 1);
-        cCurrentChar = sNameChars[iCurrentCharIndex];
+        cCurrentChar = sNumberChars[iCurrentCharIndex];
         lcd.print(cCurrentChar);
         iCurrentCounter = iRotaryEncoder_Counter;
       }
@@ -1323,12 +1455,12 @@ void Beeps(int iNmbBeeps, int iMSLengthON, int iMSLengthOFF)
   if (bBuzzer == false)
     return;
 
-  for (int i=0; i<iNmbBeeps; i++)
+  for (int i = 0; i < iNmbBeeps; i++)
   {
     digitalWrite(BUZZER, HIGH);
     delay(iMSLengthON);//wait for 1ms
     digitalWrite(BUZZER, LOW);
-    delay(iMSLengthOFF);//wait for 1ms    
+    delay(iMSLengthOFF);//wait for 1ms
   }
 }
 
@@ -1341,7 +1473,7 @@ void MoveTray(int iSteps)
 #if 0
 void TestNameEntry()
 {
-   Serial.println(F("Add to Database!"));
+  Serial.println(F("Add to Database!"));
   lcd.setCursor(0, 0);
   lcd.print(F("Name:  "));
   lcd.write((byte) 0xff);
@@ -1382,3 +1514,27 @@ void TestNameEntry()
   Serial.println(sNewName);
 }
 #endif
+
+bool F_RemoteLCDSerial(const __FlashStringHelper *lcd1, const __FlashStringHelper *lcd2)
+{
+  if (bRemoteLCDSerial == false)
+    return (false);
+
+  Serial.print('[');
+  Serial.print(lcd1);
+  Serial.println("");
+  Serial.print(lcd2);
+  Serial.print(']'); 
+}
+
+bool RemoteLCDSerial(char *lcd1, char *lcd2)
+{
+  if (bRemoteLCDSerial == false || strlen(lcd1) != 16 || strlen(lcd2) != 16)
+    return (false);
+
+  Serial.print('[');
+  Serial.print(lcd1);
+  Serial.println("");
+  Serial.print(lcd2);
+  Serial.print(']'); 
+}
