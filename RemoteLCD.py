@@ -69,6 +69,7 @@ if type(args.showports) is not NoneType:
 
 if type(args.comport) is NoneType:
     print ("--comport <COMPORT> is required!")
+    print ("--showports True   will show available comports")
     exit(1)
 
 print ("Connecting to LEGO DNA Sequencer on Arduino on Port",args.comport)
@@ -87,7 +88,7 @@ root=tk.Tk()
 root.title("LEGO DNA Sequencer")
 root.geometry("1540x340")
 root.attributes('-fullscreen', True)
-label = tk.Label(root, text=" LEGO DNA Sequencer ", font=("Courier", 48), bg="black", fg="white")
+label = tk.Label(root, text=" LEGO DNA Sequencer -- Remote LCD ", font=("Courier", 48), bg="black", fg="white")
 label.pack()
 
 Draw()
