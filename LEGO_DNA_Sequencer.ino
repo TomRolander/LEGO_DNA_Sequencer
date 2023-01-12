@@ -14,11 +14,11 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-01-10")
+#define VERSION F("Ver 0.9 2023-01-11")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 01-10-23")
+#define VERSION_SHORT F("Ver 0.9 01-11-23")
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 #define DEBUG_MODE   0
 
 #define FILTER_BAD_WORDS  0
