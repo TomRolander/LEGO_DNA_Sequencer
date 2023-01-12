@@ -18,8 +18,10 @@
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
 #define VERSION_SHORT F("Ver 0.9 01-10-23")
 
-#define DEBUG_OUTPUT 0
+#define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
+
+#define FILTER_BAD_WORDS  0
 
 #define FLORA 0
 
@@ -68,8 +70,8 @@ char sNumberChars[13] = "0123456789<*";
 #define NMB_NUMBER_CHARS  12
 
 
+#if FILTER_BAD_WORDS
 #include <MD5.h>
-
 #define NMB_BAD_WORDS 10
 const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 {
@@ -84,6 +86,7 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
   {0xa0, 0x15, 0x4f, 0x58, 0xd6, 0xa4, 0x46, 0x1c, 0x9d, 0x35, 0x3d, 0x04, 0xd6, 0x3d, 0xb0, 0x8b},
   {0xf7, 0x3e, 0x87, 0x12, 0x37, 0x3e, 0xba, 0xab, 0xa7, 0xf8, 0xb6, 0x91, 0xa1, 0x92, 0x24, 0xeb}
 };
+#endif
 
 #include <EEPROM.h>
 
@@ -100,10 +103,10 @@ const unsigned char ucBadWords[NMB_BAD_WORDS][16] =
 #define EEPROM_NUMBER_OF_LEGO_DNA          11 // 011-011  iNumberOfEEPROM
 #define EEPROM_LEGO_DNA                    12 // 012-511  LEGO_DNAs
 
-#define EEPROM_LEGO_DNA_MAX                5
+#define EEPROM_LEGO_DNA_MAX                4
 #define EEPROM_LEGO_DNA_ENTRY_SIZE         28
 
-#define LEGO_DNA_MAX  8
+#define LEGO_DNA_MAX  11
 
 static int iNumberOfEEPROM = 0;
 
@@ -149,7 +152,10 @@ const int stepsPerRevolution = 2038;
 #define STEPPER_PIN_3 11
 #define STEPPER_PIN_4 12
 
+#define OFFSET_TO_FIRST_BRICK 460
 #define STEPS_PER_LEGO_BRICK  550
+#define STEPS_PER_AUTO_POSITION   25
+#define OFFSET_AUTO_POSITION  200
 
 // Creates an instance of stepper class
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
@@ -196,16 +202,17 @@ char sMaintenanceOp[MAINTENANCE_NMB_OPS][17] =
   "  VERSION INFO  "
 };
 
-#define ADVANCED_NMB_OPS            8
+#define ADVANCED_NMB_OPS            9
 
 #define ADVANCED_OP_CANCEL          0
 #define ADVANCED_OP_CLEAR_CHANNEL   1
 #define ADVANCED_OP_RED_CHANNEL     2
 #define ADVANCED_OP_BLUE_CHANNEL    3
 #define ADVANCED_OP_AUTO_CHANNEL    4
-#define ADVANCED_OP_REMOTE_LCD_ON   5
-#define ADVANCED_OP_REMOTE_LCD_OFF  6
-#define ADVANCED_OP_REBOOT          7
+#define ADVANCED_OP_AUTO_POSITION   5
+#define ADVANCED_OP_REMOTE_LCD_ON   6
+#define ADVANCED_OP_REMOTE_LCD_OFF  7
+#define ADVANCED_OP_REBOOT          8
 
 char sAdvancedOp[ADVANCED_NMB_OPS][17] =
 { "  CANCEL        ",
@@ -213,6 +220,7 @@ char sAdvancedOp[ADVANCED_NMB_OPS][17] =
   "  RED CHANNEL   ",
   "  BLUE CHANNEL  ",
   "  AUTO CHANNEL  ",
+  "  AUTO POSITION ",
   "  REMOTE LCD ON ",
   "  REMOTE LCD OFF",
   "  REBOOT        "
@@ -913,10 +921,12 @@ void loop()
                 if (CheckRotaryEncoder())
                 {
 #if DEBUG_OUTPUT
+#if 0
                   Serial.print(F("iCounter = "));
                   Serial.print(iCounter);
                   Serial.print(F("  iRotaryEncoder_Counter = "));
                   Serial.println(iRotaryEncoder_Counter);
+#endif
 #endif
                   if (iRotaryEncoder_Counter > iCounter)
                     MoveTray(50);
@@ -945,139 +955,7 @@ void loop()
             break;
 
           case MAINTENANCE_OP_ADVANCED:
-            ////////////////////////////////////////////////////////////////////////////////////////////
-
-            while (GetButtonPressed() == false)
-            {
-              while (true)
-              {
-                lcd.setCursor(0, 0);
-                lcd.print(F("Select Option:  "));
-
-                int iAdvancedOp = ADVANCED_OP_CANCEL;
-
-                while (true)
-                {
-                  lcd.setCursor(0, 1);
-                  lcd.print(sAdvancedOp[iAdvancedOp]);
-
-                  if (GetButtonPressed())
-                    break;
-
-                  int iCounter = iRotaryEncoder_Counter;
-                  if (CheckRotaryEncoder())
-                  {
-                    if (iRotaryEncoder_Counter > iCounter)
-                    {
-                      iAdvancedOp++;
-                      if (iAdvancedOp  >= ADVANCED_NMB_OPS)
-                        iAdvancedOp = ADVANCED_OP_CANCEL;
-                    }
-                    else
-                    {
-                      iAdvancedOp--;
-                      if (iAdvancedOp < 0)
-                        iAdvancedOp = ADVANCED_OP_REBOOT;
-                    }
-                  }
-                }
-
-                int iResult;
-                switch (iAdvancedOp)
-                {
-                  case ADVANCED_OP_CANCEL:
-                    return;
-
-                  case ADVANCED_OP_CLEAR_CHANNEL:
-                    iResult = GetNumber(iCLEAR_CHANNEL_THRESHHOLD, "CLEAR", EEPROM_CLEAR_CHANNEL_THRESHHOLD);
-                    if (iResult > 0)
-                      iCLEAR_CHANNEL_THRESHHOLD = iResult;
-                    break;
-
-                  case ADVANCED_OP_RED_CHANNEL:
-                    iResult = GetNumber(iRED_CHANNEL_THRESHHOLD, "RED", EEPROM_RED_CHANNEL_THRESHHOLD);
-                    if (iResult > 0)
-                      iRED_CHANNEL_THRESHHOLD = iResult;
-                    break;
-
-                  case ADVANCED_OP_BLUE_CHANNEL:
-                    iResult = GetNumber(iBLUE_CHANNEL_THRESHHOLD, "BLUE", EEPROM_BLUE_CHANNEL_THRESHHOLD);
-                    if (iResult > 0)
-                      iBLUE_CHANNEL_THRESHHOLD = iResult;
-                    break;
-
-                  case ADVANCED_OP_AUTO_CHANNEL:
-                    if (sDNASequence[0] == '\0')
-                    {
-                      lcd.setCursor(0, 0);
-                      lcd.print(F("SCAN TEST LEGOS!"));
-                      lcd.setCursor(0, 1);
-                      lcd.print(F("PUSH BUTTON     "));
-                      while (GetButtonPressed() == false)
-                      {
-                        delay(100);
-                      }
-                      break;
-                    }
-                    if (GetYesOrNo(false, "SCAN YYRRBBGGYY?"))
-                    {
-                      char sTemp[17] = "";
-                      sprintf(sTemp,"C%d R%d B%d",iCLEAR_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD,iBLUE_CHANNEL_THRESHHOLD);
-                      lcd.setCursor(0, 0);
-                      lcd.print(F("CURRENT CHANNELS"));
-                      lcd.setCursor(0, 1);
-                      lcd.print(F("                "));
-                      lcd.setCursor(0, 1);
-                      lcd.print(sTemp);
-                      while (GetButtonPressed() == false)
-                      {
-                        delay(100);
-                      }
-                      int iClear = iBrickSequencing[0][3];
-                      int iRed = iBrickSequencing[2][0];
-                      int iBlue = iBrickSequencing[4][2];
-                      if (iBrickSequencing[1][3] < iClear)
-                        iClear = iBrickSequencing[1][3];
-                      if (iBrickSequencing[3][0] < iRed)
-                        iRed = iBrickSequencing[3][0];
-                      if (iBrickSequencing[5][2] < iBlue)
-                        iBlue = iBrickSequencing[5][2];
-                      iClear = iClear - ((iClear * 1)/10);
-                      iRed = iRed - ((iRed * 1)/10);
-                      iBlue = iBlue - ((iBlue * 1)/10);
-                      sprintf(sTemp,"C%d R%d B%d?", iClear, iRed, iBlue);
-                      if (GetYesOrNo(false, sTemp))
-                      {
-                        iCLEAR_CHANNEL_THRESHHOLD = iClear;
-                        iRED_CHANNEL_THRESHHOLD = iRed;
-                        iBLUE_CHANNEL_THRESHHOLD = iBlue;
-                        writeUnsignedIntIntoEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD, iCLEAR_CHANNEL_THRESHHOLD);
-                        writeUnsignedIntIntoEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD);
-                        writeUnsignedIntIntoEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD, iBLUE_CHANNEL_THRESHHOLD);
-                      }
-                    }
-                    break;
-
-                  case ADVANCED_OP_REMOTE_LCD_ON:
-                    bRemoteLCDSerial = true;
-                    EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
-                    re_set();
-                    break;
-
-                  case ADVANCED_OP_REMOTE_LCD_OFF:
-                    bRemoteLCDSerial = false;
-                    EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
-                    re_set();
-                    break;
-
-                  case ADVANCED_OP_REBOOT:
-                    re_set();
-                    break;      
-                }
-              }
-            }
-
-            ////////////////////////////////////////////////////////////////////////////////////////////
+            Advanced();
             break;
 
           case MAINTENANCE_OP_VERSION_INFO:
@@ -1115,7 +993,7 @@ void loop()
 
   myStepper.setSpeed(10);
   iStepPosition = 0;
-  MoveTray(460);
+  MoveTray(OFFSET_TO_FIRST_BRICK);
 
   sDNASequence[NMB_LEGO_BRICKS] = '\0';
 
@@ -1306,6 +1184,8 @@ void loop()
                   Serial.print(sNewName);
                   Serial.println(F("]"));
 #endif
+
+#if FILTER_BAD_WORDS
                   // Check for Bad Word
                   bool bBadWord = false;
                   for (int i = 0; i < NMB_BAD_WORDS; i++)
@@ -1346,6 +1226,7 @@ void loop()
                       ;
                   }
                   else
+#endif                  
                   {
                     // Now add to DATABASE
                     int iOffset = (EEPROM_LEGO_DNA_ENTRY_SIZE * iNumberOfEEPROM);
@@ -1374,6 +1255,220 @@ void loop()
         }
       }
       iState = STATE_LOAD_TRAY;
+    }
+  }
+}
+
+void Advanced()
+{
+  while (GetButtonPressed() == false)
+  {
+    while (true)
+    {
+      lcd.setCursor(0, 0);
+      lcd.print(F("Select Option:  "));
+
+      int iAdvancedOp = ADVANCED_OP_CANCEL;
+
+      while (true)
+      {
+        lcd.setCursor(0, 1);
+        lcd.print(sAdvancedOp[iAdvancedOp]);
+
+        if (GetButtonPressed())
+          break;
+
+        int iCounter = iRotaryEncoder_Counter;
+        if (CheckRotaryEncoder())
+        {
+          if (iRotaryEncoder_Counter > iCounter)
+          {
+            iAdvancedOp++;
+            if (iAdvancedOp  >= ADVANCED_NMB_OPS)
+              iAdvancedOp = ADVANCED_OP_CANCEL;
+          }
+          else
+          {
+            iAdvancedOp--;
+            if (iAdvancedOp < 0)
+              iAdvancedOp = ADVANCED_OP_REBOOT;
+          }
+        }
+      }
+      
+      int iResult;
+      switch (iAdvancedOp)
+      {
+        case ADVANCED_OP_CANCEL:
+          return;
+
+        case ADVANCED_OP_CLEAR_CHANNEL:
+          iResult = GetNumber(iCLEAR_CHANNEL_THRESHHOLD, "CLEAR", EEPROM_CLEAR_CHANNEL_THRESHHOLD);
+          if (iResult > 0)
+            iCLEAR_CHANNEL_THRESHHOLD = iResult;
+          break;
+
+        case ADVANCED_OP_RED_CHANNEL:
+          iResult = GetNumber(iRED_CHANNEL_THRESHHOLD, "RED", EEPROM_RED_CHANNEL_THRESHHOLD);
+          if (iResult > 0)
+            iRED_CHANNEL_THRESHHOLD = iResult;
+          break;
+
+        case ADVANCED_OP_BLUE_CHANNEL:
+          iResult = GetNumber(iBLUE_CHANNEL_THRESHHOLD, "BLUE", EEPROM_BLUE_CHANNEL_THRESHHOLD);
+          if (iResult > 0)
+            iBLUE_CHANNEL_THRESHHOLD = iResult;
+          break;
+
+        case ADVANCED_OP_AUTO_CHANNEL:
+          if (sDNASequence[0] == '\0')
+          {
+            lcd.setCursor(0, 0);
+            lcd.print(F("SCAN TEST LEGOS!"));
+            lcd.setCursor(0, 1);
+            lcd.print(F("PUSH BUTTON     "));
+            while (GetButtonPressed() == false)
+            {
+              delay(100);
+            }
+            break;
+          }
+          if (GetYesOrNo(false, "SCAN YYRRBBGGYY?"))
+          {
+            char sTemp[17] = "";
+            sprintf(sTemp,"C%d R%d B%d",iCLEAR_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD,iBLUE_CHANNEL_THRESHHOLD);
+            lcd.setCursor(0, 0);
+            lcd.print(F("CURRENT CHANNELS"));
+            lcd.setCursor(0, 1);
+            lcd.print(F("                "));
+            lcd.setCursor(0, 1);
+            lcd.print(sTemp);
+            while (GetButtonPressed() == false)
+            {
+              delay(100);
+            }
+            int iClear = iBrickSequencing[0][3];
+            int iRed = iBrickSequencing[2][0];
+            int iBlue = iBrickSequencing[4][2];
+            if (iBrickSequencing[1][3] < iClear)
+              iClear = iBrickSequencing[1][3];
+            if (iBrickSequencing[3][0] < iRed)
+              iRed = iBrickSequencing[3][0];
+            if (iBrickSequencing[5][2] < iBlue)
+              iBlue = iBrickSequencing[5][2];
+            iClear = iClear - ((iClear * 1)/10);
+            iRed = iRed - ((iRed * 1)/10);
+            iBlue = iBlue - ((iBlue * 1)/10);
+            sprintf(sTemp,"C%d R%d B%d?", iClear, iRed, iBlue);
+            if (GetYesOrNo(false, sTemp))
+            {
+              iCLEAR_CHANNEL_THRESHHOLD = iClear;
+              iRED_CHANNEL_THRESHHOLD = iRed;
+              iBLUE_CHANNEL_THRESHHOLD = iBlue;
+              writeUnsignedIntIntoEEPROM(EEPROM_CLEAR_CHANNEL_THRESHHOLD, iCLEAR_CHANNEL_THRESHHOLD);
+              writeUnsignedIntIntoEEPROM(EEPROM_RED_CHANNEL_THRESHHOLD, iRED_CHANNEL_THRESHHOLD);
+              writeUnsignedIntIntoEEPROM(EEPROM_BLUE_CHANNEL_THRESHHOLD, iBLUE_CHANNEL_THRESHHOLD);
+            }
+          }     
+          break;
+
+        case ADVANCED_OP_AUTO_POSITION:
+        {
+            lcd.setCursor(0, 0);
+            lcd.print(F("USE TEST LEGO   "));
+            lcd.setCursor(0, 1);
+            lcd.print(F(" Push Button    "));
+            while (GetButtonPressed() == false)
+            {
+              delay(100);
+            }
+            // Advance 25 steps at a time until red found and then red lost
+            lcd.setCursor(0, 0);
+            lcd.print(F("AUTO POSITIONING"));
+            lcd.setCursor(0, 1);
+            lcd.print(F("                "));
+            
+            tcs.setInterrupt(false);
+            digitalWrite (LED_TCS34725, HIGH);
+
+            MoveTray(OFFSET_TO_FIRST_BRICK);
+            MoveTray(STEPS_PER_LEGO_BRICK);
+
+            iStepPosition = 0;
+            bool bWaitingForRED = true;
+            int iStartPositionRED = 0;
+            int iEndPositionRED = 0;
+            while (iStepPosition < 4000)
+            {
+              MoveTray(STEPS_PER_AUTO_POSITION);
+              lcd.setCursor(0, 1);
+              char cColor = GetLEGOColor(0);
+              if (bWaitingForRED == true &&
+                  cColor == RED)
+              {
+//Serial.print("RED = "); Serial.println(iStepPosition);
+                iStartPositionRED = iStepPosition;
+                bWaitingForRED = false;
+              }
+              else
+              if (bWaitingForRED == false &&
+                  cColor != RED)
+              {
+//Serial.print("BLUE = "); Serial.println(iStepPosition);
+                iEndPositionRED = iStepPosition;
+                break;
+              }
+            }
+            tcs.setInterrupt(true);
+            digitalWrite (LED_TCS34725, LOW);
+            
+            if (iStartPositionRED == 0 || iEndPositionRED == 0)
+            {
+              lcd.setCursor(0, 0);
+              lcd.print(F("AUTO POSITIONING"));
+              lcd.setCursor(0, 1);
+              lcd.print(F("   FAILURE      "));
+              while (GetButtonPressed() == false)
+              {
+                delay(100);
+              }
+              break;                     
+            }
+            else
+            {
+              int iSecondREDStart = (iEndPositionRED + iStartPositionRED)/2;
+//Serial.print("2nd RED = "); Serial.println(iSecondREDStart);
+              MoveTray(iSecondREDStart-iStepPosition);
+              int iMove = 0 - (STEPS_PER_LEGO_BRICK *2);
+//Serial.print("iMove = "); Serial.println(iMove);
+              iMove = iMove - OFFSET_TO_FIRST_BRICK;
+//Serial.print("iMove = "); Serial.println(iMove);
+              iMove = iMove - OFFSET_AUTO_POSITION;
+//Serial.print("iMove = "); Serial.println(iMove);
+              MoveTray(iMove);
+            }
+          break;
+        }
+
+        case ADVANCED_OP_REMOTE_LCD_ON:
+          bRemoteLCDSerial = true;
+          EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
+          re_set();
+          break;
+
+        case ADVANCED_OP_REMOTE_LCD_OFF:        
+          bRemoteLCDSerial = false;
+          EEPROM[EEPROM_REMOTE_LCD_SERIAL] = bRemoteLCDSerial;
+          re_set();
+          break;
+
+        case ADVANCED_OP_REBOOT:
+          re_set();
+          break;  
+
+        default:
+          break;
+      }
     }
   }
 }
@@ -1535,7 +1630,7 @@ bool F_RemoteLCDSerial(const __FlashStringHelper *lcd1, const __FlashStringHelpe
 
 bool RemoteLCDSerial(char *lcd1, char *lcd2)
 {
-  if (bRemoteLCDSerial == false || strlen(lcd1) != 16 || strlen(lcd2) != 16)
+  if (bRemoteLCDSerial == false)
     return (false);
 
   Serial.print('[');
