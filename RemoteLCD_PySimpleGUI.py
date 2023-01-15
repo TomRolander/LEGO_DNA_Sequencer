@@ -107,6 +107,7 @@ while True:
                 color = getcolor(lcd2[9])
                 window['LINE3-9'].update(background_color=color);
                 window['LINE3-9'].update(chr(lcd2[9]));
+                window['LINE2'].update("                ");
             else:
                 window['LINE2'].update(str(lcd2, 'UTF-8'));
 
