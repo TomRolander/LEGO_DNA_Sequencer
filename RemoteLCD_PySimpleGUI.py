@@ -1,6 +1,6 @@
 """
 /**************************************************************************
-  RemoteLDC
+  RemoteLDC_PySimpleGUI
     The purpose of this Python program is to remotely display the
   contents of an Arduino 1602 LCD.  It was created to facilitate 
   a large group of persons watching the LEGO DNA Sequencer.
@@ -18,9 +18,9 @@
  **************************************************************************/
 
 """
-Program = "RemoteLCD"
-Version = "Ver 0.2"
-RevisionDate = "2023-01-15"
+Program = "RemoteLCD_PySimpleGUI"
+Version = "Ver 0.3"
+RevisionDate = "2023-01-16"
 
 import sys
 import os
