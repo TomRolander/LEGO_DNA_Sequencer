@@ -14,9 +14,9 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-01-14")
+#define VERSION F("Ver 0.9 2023-01-16")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 01-14-23")
+#define VERSION_SHORT F("Ver 0.9 01-16-23")
 
 #define DEBUG_OUTPUT 0
 #define DEBUG_MODE   0
@@ -1144,6 +1144,10 @@ void loop()
                   lcd.setCursor(index, 1);
                   lcd.print(' ');
                   index = index - 1;
+                  char lcd1[17] = "Name:  * to end ";
+                  char lcd2[17] = "                ";
+                  strncpy(lcd2, sNewName, strlen(sNewName));
+                  RemoteLCDSerial(lcd1, lcd2);              
                   continue;
                 }
               }
