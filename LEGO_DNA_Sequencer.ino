@@ -1144,6 +1144,7 @@ void loop()
                   lcd.setCursor(index, 1);
                   lcd.print(' ');
                   index = index - 1;
+                  sNewName[index] = '\0';
                   char lcd1[17] = "Name:  * to end ";
                   char lcd2[17] = "                ";
                   strncpy(lcd2, sNewName, strlen(sNewName));
