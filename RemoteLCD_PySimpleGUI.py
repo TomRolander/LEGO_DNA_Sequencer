@@ -30,7 +30,7 @@ import argparse
 from types import NoneType
 import PySimpleGUI as sg
 
-def getcolor(x):
+def getbackgroundcolor(x):
     if chr(x) == 'A':
         return 'green'
     if chr(x) == 'C':
@@ -40,9 +40,32 @@ def getcolor(x):
     if chr(x) == 'T':
         return 'blue'
 
+def gettextcolor(x):
+    if chr(x) == 'C':
+        return 'black'
+    else:
+        return 'white'
 
+print (Program, Version, RevisionDate)
 
-SerialObj = serial.Serial('COM4') # COMxx   format on Windows
+parser = argparse.ArgumentParser("RemoteLCD")
+parser.add_argument('--comport', type=str, required=False, help="COM port")
+parser.add_argument('--showports', required=False, choices=('True','False'))
+args = parser.parse_args()
+
+if type(args.showports) is not NoneType:
+    os.system("python -m serial.tools.list_ports")
+    exit(0)
+
+if type(args.comport) is NoneType:
+    print ("--comport <COMPORT> is required!")
+    print ("--showports True   will show available comports")
+    exit(1)
+
+print ("Connecting to LEGO DNA Sequencer on Arduino on Port",args.comport)
+
+SerialObj = serial.Serial(args.comport) # COMxx   format on Windows
+#SerialObj = serial.Serial('COM4') # COMxx   format on Windows
                                    # ttyUSBx format on Linux
 
 SerialObj.baudrate = 115200  # set Baud rate to 9600
@@ -51,11 +74,24 @@ SerialObj.parity   ='N'    # No parity
 SerialObj.stopbits = 1     # Number of Stop bits = 1
 
 
-sg.theme('Black')   # Add a touch of color
-# All the stuff inside your window.
+sg.theme('Black')   
 layout = [  [sg.Text('LEGO DNA Sqncr', font=("Courier",120), key='LINE1')],
-            [sg.Text(' Push Button', font=("Courier",120), key='LINE2')],
-            [sg.Text(' ', font=("Courier",120), key='LINE3-0'), sg.Text(' ', font=("Courier",120), key='LINE3-1'), sg.Text(' ', font=("Courier",120), key='LINE3-2'), sg.Text(' ', font=("Courier",120), key='LINE3-3'), sg.Text(' ', font=("Courier",120), key='LINE3-4'), sg.Text(' ', font=("Courier",120), key='LINE3-5'), sg.Text(' ', font=("Courier",120), key='LINE3-6'), sg.Text(' ', font=("Courier",120), key='LINE3-7'), sg.Text(' ', font=("Courier",120), key='LINE3-8'), sg.Text(' ', font=("Courier",120), key='LINE3-9')]
+            [sg.Text(' Push Button', font=("Courier",120), key='LINE2-COL0'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL1'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL2'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL3'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL4'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL5'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL6'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL7'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL8'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL9'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL10'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL11'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL12'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL13'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL14'),
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL15')]
          ]
 
 # Create the Window
@@ -74,41 +110,25 @@ while True:
             SerialObj.read(2)   #Ignore the '\r\n'
             lcd2 = SerialObj.read(16)
             SerialObj.read(1)   #Ignore the ']'
-            window['LINE1'].update(str(lcd1, 'UTF-8'));
-            if str(lcd1, 'UTF-8') == "Sequencing DNA  ":
-                #window['LINE3-0'].update(text_color='black');
-                color = getcolor(lcd2[0])
-                window['LINE3-0'].update(background_color=color);
-                window['LINE3-0'].update(chr(lcd2[0]));
-                color = getcolor(lcd2[1])
-                window['LINE3-1'].update(background_color=color);
-                window['LINE3-1'].update(chr(lcd2[1]));
-                color = getcolor(lcd2[2])
-                window['LINE3-2'].update(background_color=color);
-                window['LINE3-2'].update(chr(lcd2[2]));
-                color = getcolor(lcd2[3])
-                window['LINE3-3'].update(background_color=color);
-                window['LINE3-3'].update(chr(lcd2[3]));
-                color = getcolor(lcd2[4])
-                window['LINE3-4'].update(background_color=color);
-                window['LINE3-4'].update(chr(lcd2[4]));
-                color = getcolor(lcd2[5])
-                window['LINE3-5'].update(background_color=color);
-                window['LINE3-5'].update(chr(lcd2[5]));
-                color = getcolor(lcd2[6])
-                window['LINE3-6'].update(background_color=color);
-                window['LINE3-6'].update(chr(lcd2[6]));
-                color = getcolor(lcd2[7])
-                window['LINE3-7'].update(background_color=color);
-                window['LINE3-7'].update(chr(lcd2[7]));
-                color = getcolor(lcd2[8])
-                window['LINE3-8'].update(background_color=color);
-                window['LINE3-8'].update(chr(lcd2[8]));
-                color = getcolor(lcd2[9])
-                window['LINE3-9'].update(background_color=color);
-                window['LINE3-9'].update(chr(lcd2[9]));
-                window['LINE2'].update("                ");
+            window['LINE1'].update(str(lcd1, 'UTF-8'))
+            if str(lcd1, 'UTF-8') == "Sequencing DNA  " or str(lcd1, 'UTF-8') == "Unloading tray  ":
+                for x in range(10):
+                    backgroundcolor = getbackgroundcolor(lcd2[x])
+                    window['LINE2-COL'+str(x)].update(background_color=backgroundcolor)
+                    textcolor = gettextcolor(lcd2[x])
+                    window['LINE2-COL'+str(x)].update(text_color=textcolor)
+                    window['LINE2-COL'+str(x)].update(font=("Courier",120, 'bold'))                    
+                    window['LINE2-COL'+str(x)].update(chr(lcd2[x]))
+                n = range(10, 16)
+                for x in n:
+                    window['LINE2-COL'+str(x)].update(background_color='black')
+                    window['LINE2-COL'+str(x)].update(text_color='white')
+                    window['LINE2-COL'+str(x)].update(chr(lcd2[x]))
             else:
-                window['LINE2'].update(str(lcd2, 'UTF-8'));
+                for x in range(16):
+                    window['LINE2-COL'+str(x)].update(background_color='black')
+                    window['LINE2-COL'+str(x)].update(text_color='white')
+                    window['LINE2-COL'+str(x)].update(font=("Courier",120, 'normal'))                    
+                    window['LINE2-COL'+str(x)].update(chr(lcd2[x]))
 
 window.close()
