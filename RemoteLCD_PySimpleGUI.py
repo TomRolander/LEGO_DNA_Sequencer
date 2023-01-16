@@ -19,8 +19,8 @@
 
 """
 Program = "RemoteLCD"
-Version = "Ver 0.1"
-RevisionDate = "2023-01-10"
+Version = "Ver 0.2"
+RevisionDate = "2023-01-15"
 
 import sys
 import os
@@ -95,7 +95,7 @@ layout = [  [sg.Text('LEGO DNA Sqncr', font=("Courier",120), key='LINE1')],
          ]
 
 # Create the Window
-window = sg.Window('LEGO DNA Sequencer', layout, margins=(150,250)).Finalize()
+window = sg.Window('LEGO DNA Sequencer', layout, margins=(50,250)).Finalize()
 window.Maximize()
 
 # Event Loop to process "events"
