@@ -32,7 +32,7 @@
 // Proc to reset the Arduino
 void (* re_set)(void) = 0x00;
 
-static bool bRemoteLCDSerial = false;
+static bool bRemoteLCDSerial = true;
 
 static int iState = STATE_START;
 
