@@ -3,13 +3,9 @@
 ![LEGO DNA Sequencer](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Images/LEGO_DNA_Sequencer.jpg)
 
 # Table of Contents
-- [LEGO DNA Sequencer and DIY Construction](#lego-dna-sequencer-and-diy-construction)
-- [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Documentation](#documentation)
-  - [Arduino Breadboard](#arduino-breadboard)
-  - [Arduino Schematic](#arduino-schematic)
-  - [Python Remote LCD](#python-remote-lcd)
+  
+[Overview](#overview)
+[Documentation](#documentation)
 
 ## Overview
 The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a complete blueprint for an open source tool that can be used to explain the complex DNA sequencing operation with a colorful easy to understand model.
@@ -35,6 +31,6 @@ In a classroom setting for demonstrating the LEGO DNA Sequencer this Python code
 
 ![Remote LCD](Images/RemoteLCD.jpg)
 
-![RemoteLCD PySimpleGUI Version](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Python%20Remote%20LCD/RemoteLCD_PySimpleGUI.py)
+[RemoteLCD PySimpleGUI Version](Python%20Remote%20LCD/RemoteLCD_PySimpleGUI.py)
 
-![RemoteLCD tkinter Version](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Python%20Remote%20LCD/RemoteLCD_tkinter.py)
+[RemoteLCD tkinter Version](Python%20Remote%20LCD/RemoteLCD_tkinter.py)
