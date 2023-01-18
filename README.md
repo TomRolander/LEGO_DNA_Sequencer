@@ -5,4 +5,6 @@ The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a comp
 
 
  ## Documentation
- 
+ The documentation for the LEGO DNA Sequencer includes a complete PDF with the DIY and also a separate extracted User Manual.
+
+![LEGO DNA Sequencer and DIY Construction](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Documentation/LEGO%20DNA%20Sequencer%20User%20Manual.pdf)
