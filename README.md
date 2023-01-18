@@ -12,6 +12,7 @@
 &emsp;[Arduino Breadboard](#arduino-breadboard)  
 &emsp;[Arduino Schematic](#arduino-schematic)  
 &emsp;[Python Remote LCD](#python-remote-lcd)  
+&emsp;[STL Files for 3D Printing](STL)  
 
 
 ## Overview
