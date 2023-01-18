@@ -6,8 +6,8 @@
   
 &emsp;[Overview](#overview)  
 &emsp;[Documentation](#documentation)  
-&emsp;&emsp;[LEGO DNA Sequencer and DIY Construction](Documentation/LEGO%20DNA%20Sequencer%20and%20DIY%20Construction.pdf)
-&emsp;&emsp;[LEGO DNA Sequencer User Manual](Documentation/LEGO%20DNA%20Sequencer%20User%20Manual.pdf)
+&emsp;&emsp;[LEGO DNA Sequencer and DIY Construction](Documentation/LEGO%20DNA%20Sequencer%20and%20DIY%20Construction.pdf)  
+&emsp;&emsp;[LEGO DNA Sequencer User Manual](Documentation/LEGO%20DNA%20Sequencer%20User%20Manual.pdf)  
 &emsp;[Arduino Breadboard](#arduino-breadboard)  
 &emsp;[Arduino Schematic](#arduino-schematic)  
 &emsp;[Python Remote LCD](#python-remote-lcd)  
