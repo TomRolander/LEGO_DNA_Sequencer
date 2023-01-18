@@ -4,4 +4,5 @@ The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a comp
 ![LEGO DNA Sequencer](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Images/LEGO_DNA_Sequencer.jpg)
 
 
+ ## Documentation
  
