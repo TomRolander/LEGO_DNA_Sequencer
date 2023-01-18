@@ -7,6 +7,14 @@ The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a comp
  ## Documentation
  The documentation for the LEGO DNA Sequencer includes a complete PDF with the DIY and also a separate extracted User Manual.
 
-![LEGO DNA Sequencer and DIY Construction](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Documentation/LEGO%20DNA%20Sequencer%20and%20DIY%20Construction.pdf)
+![LEGO DNA Sequencer and DIY Construction](Documentation/LEGO%20DNA%20Sequencer%20and%20DIY%20Construction.pdf)
 
-![LEGO DNA Sequencer User Manual](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Documentation/LEGO%20DNA%20Sequencer%20User%20Manual.pdf)
+![LEGO DNA Sequencer User Manual](Documentation/LEGO%20DNA%20Sequencer%20User%20Manual.pdf)
+
+## Arduino Breadboard
+
+![Arduino Breadboard](Images/LEGO%20DNA%20Sequencer_bb.jpg)
+
+## Arduino Schematic
+
+![Arduino Schematic](Images/LEGO%20DNA%20Sequencer_schem.jpg)
