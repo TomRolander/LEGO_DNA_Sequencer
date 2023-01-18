@@ -18,12 +18,13 @@
 ## Overview
 The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a complete blueprint for an open source tool that can be used to explain the complex DNA sequencing operation with a colorful easy to understand model.
 
-This document provides all of the necessary information to build your own LEGO DNA Sequencer.  The electronics assembly, 3D printed parts, software, and assembly steps are described in detail.  Also a complete Users Manual is provided describing the operation of the LEGO DNA Sequencer.
+All of the necessary information is provided to build your own LEGO DNA Sequencer.  The electronics assembly, 3D printed parts, software, and assembly steps are described in detail.  Also a complete Users Manual describes the operation of the LEGO DNA Sequencer.
 
 DNA sequencing determines the order of the four chemical building blocks - called "bases" - that make up the DNA molecule.  The building blocks are composed of A (adenine), C (cytosine), G (guanine), and T (thymine).  These building blocks are represented by LEGO® 2x2 bricks of Red for G, Blue for T, Green for A, and Yellow for C. Actual DNA sequencing is greatly simplified in this model by using genomes of only 10 building blocks to identify a species.
 
 It is beyond the scope of this document to provide more details regarding actual DNA sequencing.
 
+[LEGO DNA Sequencer Video Demo](Images/LEGO_DNA_Sequencer%20Demo.mp4)
 
  ## Documentation
  The documentation for the LEGO DNA Sequencer includes a complete PDF with the DIY and also a separate extracted User Manual.
