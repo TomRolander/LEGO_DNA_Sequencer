@@ -23,6 +23,8 @@ The purpose of this LEGO DNA Sequencer and DIY Construction is to provide a comp
 
 In a classroom setting for demonstrating the LEGO DNA Sequencer this Python code will emulate the LCD on a large screen.
 
+![Remote LCD](Images/RemoteLCD.jpg)
+
 ![RemoteLCD PySimpleGUI Version](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Python%20Remote%20LCD/RemoteLCD_PySimpleGUI.py)
 
 ![RemoteLCD tkinter Version](https://github.com/TomRolander/LEGO_DNA_Sequencer/blob/main/Python%20Remote%20LCD/RemoteLCD_tkinter.py)
