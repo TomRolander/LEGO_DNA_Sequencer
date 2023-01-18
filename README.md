@@ -43,7 +43,7 @@ It is beyond the scope of this document to provide more details regarding actual
 
 ## Python Remote LCD
 
-In a classroom setting for demonstrating the LEGO DNA Sequencer this Python code will emulate the LCD on a large screen.
+In a classroom setting for demonstrations with the LEGO DNA Sequencer this Python code will emulate the Arduino LCD on a large screen.
 
 ![Remote LCD](Images/RemoteLCD.jpg)
 
