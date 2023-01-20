@@ -92,8 +92,8 @@ layout = [  [sg.Text('LEGO DNA Sqncr', font=("Courier",120), key='LINE1')],
             sg.Text(' ', font=("Courier",120), key='LINE2-COL12'),
             sg.Text(' ', font=("Courier",120), key='LINE2-COL13'),
             sg.Text(' ', font=("Courier",120), key='LINE2-COL14'),
-            sg.Text(' ', font=("Courier",120), key='LINE2-COL15')]
-         ]
+            sg.Text(' ', font=("Courier",120), key='LINE2-COL15')],
+            [sg.Text('                ', font=("Courier",120), key='LINE3')]]
 
 # Create the Window
 window = sg.Window('LEGO DNA Sequencer', layout, margins=(50,250)).Finalize()
@@ -112,26 +112,31 @@ while True:
             lcd2 = SerialObj.read(16)
             SerialObj.read(1)   #Ignore the ']'
             window['LINE1'].update(str(lcd1, 'UTF-8'))
-            if str(lcd1, 'UTF-8') == "Sequencing DNA  " or str(lcd1, 'UTF-8') == "Unloading tray  ":
-                window['LINE2'].update('  ')
-                for x in range(10):
-                    window['LINE2-COL'+str(x)].update(background_color='black')
-                    window['LINE2-COL'+str(x)].update(' ')
-                n = range(10, 16)
-                for x in n:
-                    window['LINE2-COL'+str(x)].update(background_color='black')
-                    window['LINE2-COL'+str(x)].update(' ')
-                for x in range(10):
-                    backgroundcolor = getbackgroundcolor(lcd2[x])
-                    window['LINE2-COL'+str(x)].update(background_color=backgroundcolor)
-                    textcolor = gettextcolor(lcd2[x])
-                    window['LINE2-COL'+str(x)].update(text_color=textcolor)
-                    window['LINE2-COL'+str(x)].update(font=("Courier",120, 'bold'))                    
-                    window['LINE2-COL'+str(x)].update(chr(lcd2[x]))
+            if str(lcd1, 'UTF-8') == "Successful match":
+                window['LINE3'].update(str(lcd2, 'UTF-8'))
             else:
-                window['LINE2'].update(background_color='black')
-                window['LINE2'].update(text_color='white')
-                window['LINE2'].update(font=("Courier",120, 'normal'))                    
-                window['LINE2'].update(str(lcd2, 'UTF-8')+'        ')
+                if str(lcd1, 'UTF-8') == "Sequencing DNA  " or str(lcd1, 'UTF-8') == "Unloading tray  ":
+                    window['LINE2'].update('  ')
+                    window['LINE3'].update('                ')
+                    for x in range(10):
+                        window['LINE2-COL'+str(x)].update(background_color='black')
+                        window['LINE2-COL'+str(x)].update(' ')
+                    n = range(10, 16)
+                    for x in n:
+                        window['LINE2-COL'+str(x)].update(background_color='black')
+                        window['LINE2-COL'+str(x)].update(' ')
+                    for x in range(10):
+                        backgroundcolor = getbackgroundcolor(lcd2[x])
+                        window['LINE2-COL'+str(x)].update(background_color=backgroundcolor)
+                        textcolor = gettextcolor(lcd2[x])
+                        window['LINE2-COL'+str(x)].update(text_color=textcolor)
+                        window['LINE2-COL'+str(x)].update(font=("Courier",120, 'bold'))                    
+                        window['LINE2-COL'+str(x)].update(chr(lcd2[x]))
+                else:
+                    window['LINE2'].update(background_color='black')
+                    window['LINE2'].update(text_color='white')
+                    window['LINE2'].update(font=("Courier",120, 'normal'))                    
+                    window['LINE2'].update(str(lcd2, 'UTF-8')+'        ')
+                    window['LINE3'].update('                ')
 
 window.close()
