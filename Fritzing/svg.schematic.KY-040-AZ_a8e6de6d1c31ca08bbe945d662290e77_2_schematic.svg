@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 710 810" id="svg8"  gorn="0" height="0.810in" width="0.710in" version="1.1">
+    <desc >
+        <referenceFile >KY-040-AZ_1_schematic.svg</referenceFile>
+    </desc>
+    <title id="title931" >KY-040 Rotary Encoder Fritzing schematic view</title>
+    <defs id="defs2" />
+    <metadata id="metadata5" >
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <cc:Work xmlns:cc="http://creativecommons.org/ns#" rdf:about="" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <dc:format xmlns:dc="http://purl.org/dc/elements/1.1/">image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">KY-040 Rotary Encoder Fritzing schematic view</dc:title>
+                <cc:license xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/licenses/by/4.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">
+                    <cc:Agent xmlns:cc="http://creativecommons.org/ns#">
+                        <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Florian Zschocke</dc:title>
+                    </cc:Agent>
+                </dc:creator>
+            </cc:Work>
+            <cc:License xmlns:cc="http://creativecommons.org/ns#" rdf:about="http://creativecommons.org/licenses/by/4.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <cc:permits xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/ns#Reproduction" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <cc:permits xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/ns#Distribution" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <cc:requires xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/ns#Notice" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <cc:requires xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/ns#Attribution" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <cc:permits xmlns:cc="http://creativecommons.org/ns#" rdf:resource="http://creativecommons.org/ns#DerivativeWorks" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+            </cc:License>
+        </rdf:RDF>
+    </metadata>
+    <g id="schematic"  gorn="0.4">
+        <rect id="rect835" gorn="0.4.0" x="5" y="105" width="600" height="600" fill="none" stroke="#000000" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" />
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_KY"   gorn="0.4.1" x="70" y="290" xml:space="preserve" style="font-size:60;line-height:1.25;font-family:DroidSans">KY-040</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_Ro"   gorn="0.4.2" x="70" y="390" xml:space="preserve" style="font-size:60;line-height:1.25;font-family:DroidSans">Rotary</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text855"   gorn="0.4.3" x="70" y="475" xml:space="preserve" style="font-size:60;line-height:1.25;font-family:DroidSans">Encoder</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_GND"  gorn="0.4.4" x="305" y="640" font-size="50" text-anchor="middle" fill="#555555" xml:space="preserve" font-family="DroidSans">GND</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_plus" gorn="0.4.5" x="305" y="190" font-size="70" text-anchor="middle" fill="#555555" xml:space="preserve" font-family="DroidSans">+</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_SW"   gorn="0.4.6" x="550" y="317" font-size="50" text-anchor="end" fill="#555555" xml:space="preserve" font-family="DroidSans">SW</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_DT"   gorn="0.4.7" x="550" y="417" font-size="50" text-anchor="end" fill="#555555" xml:space="preserve" font-family="DroidSans">DT</text>
+        <text xmlns:xml="http://www.w3.org/XML/1998/namespace" id="text_CLK"  gorn="0.4.8" x="550" y="518" font-size="50" text-anchor="end" fill="#555555" xml:space="preserve" font-family="DroidSans">CLK</text>
+        <line id="connector0pin" gorn="0.4.9"  x1="305" y1="710" x2="305" y2="805" stroke-width="10" fill="none" stroke="#555555" stroke-linecap="round" />
+        <line id="connector1pin" gorn="0.4.10" x1="305" y1="100" x2="305" y2="5"   stroke-width="10" fill="none" stroke="#555555" stroke-linecap="round" />
+        <line id="connector2pin" gorn="0.4.11" x1="610" y1="305" x2="705" y2="305" stroke-width="10" fill="none" stroke="#555555" stroke-linecap="round" />
+        <line id="connector3pin" gorn="0.4.12" x1="610" y1="405" x2="705" y2="405" stroke-width="10" fill="none" stroke="#555555" stroke-linecap="round" />
+        <line id="connector4pin" gorn="0.4.13" x1="610" y1="505" x2="705" y2="505" stroke-width="10" fill="none" stroke="#555555" stroke-linecap="round" />
+        <rect id="connector0terminal" gorn="0.4.14" x="300" y="805" width="10" height="1" fill="none" stroke="none" />
+        <rect id="connector1terminal" gorn="0.4.15" x="300" y="5"   width="10" height="1" fill="none" stroke="none" />
+        <rect id="connector2terminal" gorn="0.4.16" x="705" y="300" width="1" height="10" fill="none" stroke="none" />
+        <rect id="connector3terminal" gorn="0.4.17" x="705" y="400" width="1" height="10" fill="none" stroke="none" />
+        <rect id="connector4terminal" gorn="0.4.18" x="705" y="500" width="1" height="10" fill="none" stroke="none" />
+    </g>
+</svg>

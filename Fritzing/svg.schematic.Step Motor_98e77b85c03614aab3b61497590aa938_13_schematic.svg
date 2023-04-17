@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1.8in" version="1.1" gorn="0"  height="1in" viewBox="0 0 162 90.000002" id="svg2">
+    <desc >
+        <referenceFile >Step Motor.svg</referenceFile>
+    </desc>
+    <defs  id="defs4"/>
+    <metadata  id="metadata7">
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <cc:Work xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" rdf:about="">
+                <dc:format xmlns:dc="http://purl.org/dc/elements/1.1/">image/svg+xml</dc:format>
+                <dc:type xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:resource="http://purl.org/dc/dcmitype/StillImage" xmlns:dc="http://purl.org/dc/elements/1.1/"/>
+                <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/"/>
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <g  transform="translate(0,-962.36215)">
+        <g >
+            <g >
+                <g gorn="0.3.0.0.0"  id="layer1">
+                    <rect width="71.333084" x="49.586956" y="974.11713" fill="#cccccc" gorn="0.3.0.0.0.0"  height="50.839676" stroke="none" fill-opacity="1" id="rect4874"/>
+                    <path stroke-opacity="1" fill="none" gorn="0.3.0.0.0.1"  stroke="none" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5155" stroke-width="0.97872" d="m 131.6775,1017.1399 c 0,0 11.3817,-0.081 11.00009,4.8925 -0.3816,4.9734 -4.9378,8.433 -10.20727,7.3799"/>
+                    <g  transform="matrix(1.0748237,0,0,1.1777443,-3.75095,-179.71362)">
+                        <g >
+                            <g >
+                                <g gorn="0.3.0.0.0.2.0.0.0"  id="g4181">
+                                    <g  transform="matrix(-0.99997059,-0.00766908,-0.00254582,-0.99999676,0,0)">
+                                        <g >
+                                            <g >
+                                                <rect width="12.487129" x="-47.53701" y="-1019.2648" fill="#cccccc" gorn="0.3.0.0.0.2.0.0.0.0.0.0.0"  height="8.4212036" stroke="none" fill-opacity="1" id="rect4959-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99997855,-0.00654922,-0.00298117,-0.99999556,0,0)">
+                                        <g >
+                                            <g >
+                                                <rect width="1.2122052" x="-43.190567" y="-1015.4936" fill="#cccccc" gorn="0.3.0.0.0.2.0.0.0.1.0.0.0"  height="0.59511709" stroke="none" fill-opacity="1" id="rect4990-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99997673,-0.00682266,-0.00286169,-0.99999591,0,0)">
+                                        <g >
+                                            <g >
+                                                <ellipse fill="#cccccc" cx="-36.239922" gorn="0.3.0.0.0.2.0.0.0.2.0.0.0"  cy="-1015.166" rx="5.8434343" ry="4.3293395" stroke="none" fill-opacity="1" id="path5229-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99996552,-0.00830391,-0.00235119,-0.99999724,0,0)">
+                                        <g >
+                                            <g >
+                                                <ellipse fill="#4d4d4d" cx="-36.820282" gorn="0.3.0.0.0.2.0.0.0.3.0.0.0"  cy="-1014.8785" rx="4.2345514" ry="3.02772" stroke="none" fill-opacity="1" id="path5507-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                    <g stroke-opacity="1" fill="#000000" gorn="0.3.0.0.0.3"  stroke="none" xmlns:xml="http://www.w3.org/XML/1998/namespace" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" fill-opacity="1" id="text5877" xml:space="preserve" stroke-width="1" font-size="5"/>
+                    <ellipse fill="#cccccc" cx="85.221245" gorn="0.3.0.0.0.4"  cy="1024.2058" rx="35.678543" ry="12.348833" stroke="none" fill-opacity="1" id="path4903-1"/>
+                    <rect width="44.073933" x="60.66613" y="980.30719" stroke-opacity="0.88172045" fill="#1d4bc5" gorn="0.3.0.0.0.5"  height="43.654182" stroke="none" fill-opacity="1" id="rect6414"/>
+                    <ellipse fill="#999999" cx="85.316429" gorn="0.3.0.0.0.6"  cy="975.12122" rx="35.695518" ry="10.986416" stroke="none" fill-opacity="1" id="path4903"/>
+                    <g stroke-opacity="1" fill="#f2f2f2" gorn="0.3.0.0.0.7"  stroke="none" xmlns:xml="http://www.w3.org/XML/1998/namespace" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" fill-opacity="1" id="text5869" xml:space="preserve" stroke-width="1" font-size="5">
+                        <text x="68.897827" y="970.36487" gorn="0.3.0.0.0.7.0"  id="tspan5871">STEP  MOTOR</text>
+                    </g>
+                    <g stroke-opacity="1" fill="#f2f2f2" gorn="0.3.0.0.0.8"  stroke="none" xmlns:xml="http://www.w3.org/XML/1998/namespace" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" fill-opacity="1" id="text5873" xml:space="preserve" stroke-width="1" font-size="5">
+                        <text x="73.486382" y="976.06165" gorn="0.3.0.0.0.8.0"  id="tspan5875">28BYJ-48</text>
+                    </g>
+                    <g stroke-opacity="1" fill="#f2f2f2" gorn="0.3.0.0.0.9"  stroke="none" xmlns:xml="http://www.w3.org/XML/1998/namespace" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" fill-opacity="1" id="text5883" xml:space="preserve" stroke-width="1" font-size="5">
+                        <text x="75.025475" y="982.14594" gorn="0.3.0.0.0.9.0"  id="tspan5885">5V   DC</text>
+                    </g>
+                    <path stroke-opacity="0.92473121" fill="none" gorn="0.3.0.0.0.10"  stroke="#0000a0" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5986" stroke-width="4.7667" d="m 93.451276,1032.3831 c 0,0 2.989315,16.6512 10.146324,17.4564"/>
+                    <path stroke-opacity="1" fill="none" gorn="0.3.0.0.0.11"  stroke="#fcde00" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5994" stroke-width="4.33147" d="m 70.176075,1033.6121 c 0,0 0.857651,14.7284 -8.719867,15.8807"/>
+                    <path stroke-opacity="0.94086022" fill="none" gorn="0.3.0.0.0.12"  stroke="#ff4200" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5992-9" stroke-width="4.24835" d="m 76.862177,1031.0107 c 0,0 0.347241,18.3488 -6.94978,19.1671"/>
+                    <path stroke-opacity="1" fill="#ff2f00" gorn="0.3.0.0.0.13"  stroke="#ea0000" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" fill-opacity="1" id="path4478" stroke-width="4.43128" d="m 83.276459,1031.4589 c 0,0 -4.512942,18.2072 0,18.6331"/>
+                    <path stroke-opacity="0.94086022" fill="none" gorn="0.3.0.0.0.14"  stroke="#ff26e5" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5992-9-9" stroke-width="4.24835" d="m 87.007878,1030.8603 c 0,0 -0.347241,18.3488 6.94978,19.1671"/>
+                    <rect width="32.740635" x="66.752518" y="991.5705" fill="#1d4bc5" gorn="0.3.0.0.0.15"  height="45.193268" stroke="none" fill-opacity="1" id="rect5887"/>
+                    <path stroke-opacity="1" fill="none" gorn="0.3.0.0.0.16"  stroke="none" style="fill-rule:evenodd;stroke-linecap:butt;stroke-linejoin:miter;" id="path5937" stroke-width="1" d="m 87.946003,1025.7327 c 0.05659,0.1098 -0.02264,0.2331 0,0.3463 0.01023,0.051 0.0409,0.097 0.04947,0.1484 0.0081,0.049 0,0.099 0,0.1484 0,0.1154 0,0.2308 0,0.3463 0,0.3462 0,0.6925 0,1.0388 0,0.1319 0,0.2638 0,0.3957 0,0.05 0,0.099 0,0.1484 0,0.033 -0.008,0.067 0,0.099 0.0089,0.036 0.04053,0.063 0.04947,0.099 0.008,0.032 0,0.066 0,0.099 0,0.033 0,0.066 0,0.099 0,0.099 0,0.1979 0,0.2968 0,0.033 0,0.066 0,0.099 0,0.033 -0.01043,0.068 0,0.099 0.0074,0.022 0.04209,0.027 0.04947,0.05 0.01043,0.031 0,0.066 0,0.099 0.01649,0.033 0.03781,0.064 0.04947,0.099 0.0052,0.016 0,0.033 0,0.05 0,0.033 0,0.066 0,0.099 0,0.099 0,0.1979 0,0.2969 0,0.033 -0.008,0.067 0,0.099 0.140135,0.2803 -0.01844,-0.074 0.04947,0.1979 0.0089,0.036 0.04053,0.063 0.04947,0.099 0.008,0.032 -0.01043,0.068 0,0.099 0.0074,0.022 0.04209,0.027 0.04947,0.05 0.01043,0.031 0,0.066 0,0.099 0,0.035 -0.0084,0.2714 0,0.2968 0.0074,0.022 0.04209,0.027 0.04947,0.049 0.01043,0.031 0,0.066 0,0.099 0,0.017 -0.0074,0.035 0,0.049 0.01043,0.021 0.04209,0.027 0.04947,0.05 0.02048,0.061 -0.01626,0.1823 0,0.2474 0.0089,0.036 0.03781,0.064 0.04947,0.099 0.0052,0.016 -0.0074,0.035 0,0.05 0.01043,0.021 0.04209,0.027 0.04947,0.049 0.01043,0.031 0,0.066 0,0.099 0,0.028 -0.0075,0.2247 0,0.2473 0.0074,0.022 0.03904,0.029 0.04947,0.05 0.0074,0.015 0,0.033 0,0.05 0,0.033 -0.01043,0.068 0,0.099 0.0074,0.022 0.03904,0.029 0.04947,0.05 0.0074,0.015 -0.0052,0.034 0,0.049 0.01166,0.035 0.03781,0.064 0.04947,0.099 0.01134,0.034 -0.01459,0.1192 0,0.1484 0.01043,0.021 0.03298,0.033 0.04947,0.05 0,0.033 -0.01043,0.068 0,0.099 0.0074,0.022 0.03904,0.029 0.04947,0.05 0.01555,0.031 -0.01555,0.1667 0,0.1978 0.01043,0.021 0.04209,0.027 0.04947,0.05 0.01043,0.031 -0.008,0.067 0,0.099 0.0089,0.036 0.03781,0.064 0.04947,0.099 0.01159,0.035 -0.01356,0.2338 0,0.2473 0.01166,0.012 0.03781,-0.012 0.04947,0 0.02332,0.023 -0.01475,0.07 0,0.099 0.01043,0.021 0.03298,0.033 0.04947,0.049"/>
+                    <path stroke-opacity="0.88172045" fill="#973e2c" gorn="0.3.0.0.0.17"  stroke="none" fill-opacity="1" id="connector6pin" stroke-width="0.02473411" d="m 70.562898,1052.4873 c -0.817016,-0.1358 -1.387077,-0.518 -1.811461,-1.2197 -0.24244,-0.4007 -0.265331,-0.4958 -0.26052,-1.0812 0.0069,-0.84 0.225227,-1.3087 0.834417,-1.7913 0.69388,-0.5497 1.495834,-0.6975 2.369906,-0.4372 0.534127,0.1602 1.16225,0.6487 1.413227,1.1007 0.35968,0.6485 0.36138,1.5672 0.0043,2.2316 -0.435439,0.8099 -1.594628,1.3543 -2.549696,1.1971 z"/>
+                    <path stroke-opacity="0.88172045" fill="#973e2c" gorn="0.3.0.0.0.18"  stroke="none" fill-opacity="1" id="connector9pin" stroke-width="0.02473411" d="m 103.15758,1052.3272 c -0.87489,-0.151 -1.48533,-0.5783 -1.93978,-1.3617 -0.25962,-0.447 -0.28413,-0.5534 -0.27898,-1.2066 0.008,-0.9377 0.24119,-1.4609 0.89352,-1.9996 0.74305,-0.6135 1.60179,-0.7787 2.53779,-0.4879 0.57196,0.1785 1.24459,0.7238 1.51334,1.2285 0.38515,0.7239 0.38698,1.7492 0.004,2.491 -0.46628,0.9039 -1.70758,1.5117 -2.73031,1.3363 z"/>
+                    <path stroke-opacity="0.88172045" fill="#973e2c" gorn="0.3.0.0.0.19"  stroke="none" fill-opacity="1" id="connector7pin" stroke-width="0.02473411" d="m 82.524412,1052.4795 c -0.767422,-0.1502 -1.302881,-0.5841 -1.701491,-1.3747 -0.227731,-0.4514 -0.249233,-0.5585 -0.244712,-1.2179 0.0068,-0.9467 0.211562,-1.4748 0.78376,-2.0186 0.651771,-0.6192 1.405039,-0.7862 2.226047,-0.4925 0.501699,0.1807 1.09169,0.7306 1.327447,1.24 0.337846,0.7306 0.339438,1.7659 0.0034,2.5147 -0.409006,0.9124 -1.497835,1.526 -2.394928,1.349 z"/>
+                    <path stroke-opacity="0.88172045" fill="#973e2c" gorn="0.3.0.0.0.20"  stroke="none" fill-opacity="1" id="connector8pin" stroke-width="0.02473411" d="m 92.244394,1052.4509 c -0.850092,-0.1481 -1.443231,-0.5673 -1.884799,-1.3359 -0.252244,-0.4385 -0.276063,-0.5428 -0.271055,-1.1837 0.0075,-0.92 0.234334,-1.4335 0.868189,-1.962 0.721962,-0.6018 1.556394,-0.7635 2.465843,-0.4783 0.555744,0.1749 1.20929,0.7101 1.470443,1.2052 0.374241,0.7102 0.376003,1.716 0.0038,2.4436 -0.453064,0.8871 -1.659184,1.4832 -2.652916,1.3111 z"/>
+                    <path stroke-opacity="0.88172045" fill="#973e2c" gorn="0.3.0.0.0.21"  stroke="none" fill-opacity="1" id="connector5pin" stroke-width="0.02473411" d="m 60.939561,1051.7896 c -0.759154,-0.136 -1.288839,-0.5183 -1.683164,-1.2201 -0.225271,-0.4004 -0.246543,-0.4956 -0.242073,-1.081 0.0066,-0.84 0.209279,-1.3087 0.775319,-1.7913 0.644737,-0.5496 1.389894,-0.6975 2.202062,-0.437 0.496294,0.1605 1.079933,0.6485 1.313136,1.1006 0.334203,0.6485 0.335784,1.567 0.0037,2.2315 -0.404598,0.8098 -1.481688,1.3542 -2.369116,1.1973 z"/>
+                    <ellipse stroke-opacity="0.88172045" fill="#1d4bc5" cx="78.435616" gorn="0.3.0.0.0.22"  cy="1017.8051" rx="17.629572" ry="5.316855" stroke="none" fill-opacity="1" id="path6436"/>
+                    <rect width="2.9382102" x="97.884109" y="988.98206" stroke-opacity="0.88172045" fill="#6d8fea" gorn="0.3.0.0.0.23"  height="32.040951" ry="1.3292139" stroke="none" fill-opacity="1" id="rect6438"/>
+                    <path stroke-opacity="1" fill="none" gorn="0.3.0.0.0.24"  stroke="#6d8fea" fill-opacity="1" id="path6458" stroke-width="1.61992395" d="M 96.054507,988.87689 A 13.922052,5.6315546 0 0 1 81.708573,992.63424 13.922052,5.6315546 0 0 1 69.17002,987.93655"/>
+                    <rect width="4.8971038" x="62.764889" y="989.82153" stroke-opacity="1" fill="#123491" gorn="0.3.0.0.0.25"  height="31.481382" ry="1.1867946" stroke="none" fill-opacity="1" id="rect6460"/>
+                    <g  transform="matrix(-1.0831375,0,0,1.1777443,175.09437,-178.97132)">
+                        <g >
+                            <g >
+                                <g gorn="0.3.0.0.0.26.0.0.0"  id="g4181-4">
+                                    <g  transform="matrix(-0.99997059,-0.00766908,-0.00254582,-0.99999676,0,0)">
+                                        <g >
+                                            <g >
+                                                <rect width="12.487129" x="-47.53701" y="-1019.2648" fill="#cccccc" gorn="0.3.0.0.0.26.0.0.0.0.0.0.0"  height="8.4212036" stroke="none" fill-opacity="1" id="rect4959-3-4"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99997855,-0.00654922,-0.00298117,-0.99999556,0,0)">
+                                        <g >
+                                            <g >
+                                                <rect width="1.2122052" x="-43.190567" y="-1015.4936" fill="#cccccc" gorn="0.3.0.0.0.26.0.0.0.1.0.0.0"  height="0.59511709" stroke="none" fill-opacity="1" id="rect4990-3-6"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99997673,-0.00682266,-0.00286169,-0.99999591,0,0)">
+                                        <g >
+                                            <g >
+                                                <ellipse fill="#cccccc" cx="-36.239922" gorn="0.3.0.0.0.26.0.0.0.2.0.0.0"  cy="-1015.166" rx="5.8434343" ry="4.3293395" stroke="none" fill-opacity="1" id="path5229-3-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g  transform="matrix(-0.99996552,-0.00830391,-0.00235119,-0.99999724,0,0)">
+                                        <g >
+                                            <g >
+                                                <ellipse fill="#4d4d4d" cx="-36.820282" gorn="0.3.0.0.0.26.0.0.0.3.0.0.0"  cy="-1014.8785" rx="4.2345514" ry="3.02772" stroke="none" fill-opacity="1" id="path5507-3-3"/>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xml="http://www.w3.org/XML/1998/namespace" viewBox="0 0 748.03178 543.01184" id="Ebene_1" x="0px"  xml:space="preserve" y="0px" gorn="0" height="0.54301184in" width="0.74803156in" enable-background="new 0 0 46.74 45.74" version="1.1">
+    <desc >
+        <referenceFile >KY-040-AZ_v0_pcb.svg</referenceFile>
+    </desc>
+    <metadata id="metadata1419" >
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <cc:Work xmlns:cc="http://creativecommons.org/ns#" rdf:about="" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <dc:format xmlns:dc="http://purl.org/dc/elements/1.1/">image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/"/>
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <desc id="desc1258" >KY-040 AZ Fritzing footprint view</desc>
+    <g id="silkscreen"  gorn="0.3">
+        <rect id="boardspace" gorn="0.3.0" x="4.8357148" y="4.8357143" height="187.18051" width="738.36005" fill="none" stroke="#000000" stroke-width="10"/>
+        <polyline id="rencase" gorn="0.3.1" fill="none" stroke="#000000" stroke-width="5" stroke-dasharray="20, 10" stroke-dashoffset="1"
+            points="673.5,348 673.5,198.5 201,198.5 201,460 673.5,460 673.5,441"
+      />
+        <path id="reshaft" gorn="0.3.2" fill="none" stroke="#000000" stroke-width="5" stroke-dasharray="20, 10" stroke-dashoffset="0"
+            d="m 636,460.82647 v 59.86019 c 0,0 -98.81,-44.80268 -200.40719,0 -98.71792,44.21009 -199.59281,0 -199.59281,0 v -59.86019" />
+    </g>
+    <g id="copper1"  gorn="0.4">
+        <g id="copper0"  gorn="0.4.0">
+            <circle id="connector4pin" gorn="0.4.0.0" cx="669.2915" cy="396.06311" r="29" stroke-width="20" fill="none" stroke="#f7bd13"/>
+            <circle id="connector3pin" gorn="0.4.0.1" cx="569.2915" cy="396.06311" r="29" stroke-width="20" fill="none" stroke="#f7bd13"/>
+            <circle id="connector2pad" gorn="0.4.0.2" cx="469.2915" cy="396.06311" r="29" stroke-width="20" fill="none" stroke="#f7bd13"/>
+            <circle id="connector1pad" gorn="0.4.0.3" cx="369.2915" cy="396.06311" r="29" stroke-width="20" fill="none" stroke="#f7bd13"/>
+            <rect id="groundconn" gorn="0.4.0.4" x="240.29143" y="367.06311" width="58" height="58" stroke-width="20" fill="none" stroke="#f7bd13"/>
+            <circle id="connector0pad" gorn="0.4.0.5" cx="269.2915" cy="396.06311" r="29" stroke-width="20" fill="none"  stroke="#f7bd13"/>
+        </g>
+    </g>
+</svg>
