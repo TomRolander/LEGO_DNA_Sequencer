@@ -11,20 +11,32 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Buzzer Unit Test")
-#define VERSION F("Ver 0.1 2023-01-04")
+#define VERSION F("Ver 0.1 2023-04-19")
 #define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
-
 
 int buzzer = A0;//the pin of the active buzzer
 
 void setup()
 {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println();
+  Serial.println(PROGRAM);
+  Serial.println(VERSION);
+
   pinMode(buzzer, OUTPUT); //initialize the buzzer pin as an output
 }
 
 void Beeps(int iNmbBeeps, int iMSLengthON, int iMSLengthOFF)
 {
+  Serial.print("Number of Beeps = ");
+  Serial.print(iNmbBeeps);
+  Serial.print(", MS Length ON = ");
+  Serial.print(iMSLengthON);
+  Serial.print(", MS Length OFF = ");
+  Serial.println(iMSLengthOFF);
+  
   for (int i=0; i<iNmbBeeps; i++)
   {
     digitalWrite(buzzer, HIGH);
