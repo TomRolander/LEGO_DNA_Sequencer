@@ -14,9 +14,9 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-01-16")
+#define VERSION F("Ver 0.9 2023-03-29")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 01-16-23")
+#define VERSION_SHORT F("Ver 0.9 03-29-23")
 
 #define DEBUG_OUTPUT 0
 #define DEBUG_MODE   0
@@ -117,6 +117,27 @@ char sDNASequence[NMB_LEGO_BRICKS + 1] = "";
 
 
 int iLEGO_DNA_Number = 7;
+#if 1
+char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS + 1] =
+{ "CCGGTTAACC",
+  "CGATGACTAG",
+  "TACGCTAGCT",
+  "GATCCGATGC",
+  "ACTGATCGAT",
+  "TAGCTAGCTA",
+  "CAGTACGATC"
+};
+char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
+{ " YYRRBBGGYY TEST",
+  "  SEA URCHIN    ",
+  "  WHITE SHARK   ",
+  "  SEA STAR      ",
+  "  ANCHOVY       ",
+  "  GIANT KELP    ",
+  "  PELICAN       "
+};
+#endif
+#if 0
 char sLEGO_DNA_Sequence[LEGO_DNA_MAX][NMB_LEGO_BRICKS + 1] =
 { "CCGGTTAACC",
   "ATTGGTCATT",
@@ -135,7 +156,7 @@ char sLEGO_DNA_Name[LEGO_DNA_MAX][17] =
   "  SEA STAR      ",
   "  TUNA          "
 };
-
+#endif
 
 #include <LiquidCrystal.h>
 int Contrast = 75;
