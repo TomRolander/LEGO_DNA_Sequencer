@@ -14,11 +14,11 @@
  **************************************************************************/
 
 #define PROGRAM "LEGO DNA Sequencer - LCD and Rotary Encoder Unit Test"
-#define VERSION "Ver 0.1 2022-12-24"
+#define VERSION "Ver 0.1 2023-04-19"
 
 #define DEBUG_OUTPUT 1
 
-#define LED_TCS34725  A0
+#define LED_TCS34725  A3
 
 #include <LiquidCrystal.h>
 int Contrast = 75;

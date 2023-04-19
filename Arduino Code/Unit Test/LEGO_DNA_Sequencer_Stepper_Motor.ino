@@ -14,10 +14,11 @@
  **************************************************************************/
 
 #define PROGRAM "LEGO DNA Sequencer - Stepper Motor Unit Test"
-#define VERSION "Ver 0.1 2022-12-24"
+#define VERSION "Ver 0.1 2023-04-19"
 
 #define DEBUG_OUTPUT 1
 
+#define LED_TCS34725  A3
 
 //Includes the Arduino Stepper Library
 #include <Stepper.h>
@@ -42,6 +43,9 @@ void setup() {
   Serial.println();
   Serial.println(PROGRAM);
   Serial.println(VERSION);
+
+  pinMode (LED_TCS34725, OUTPUT); 
+  digitalWrite (LED_TCS34725, LOW); 
 
   myStepper.setSpeed(10);
 

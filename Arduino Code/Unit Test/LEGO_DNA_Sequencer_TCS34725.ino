@@ -14,7 +14,7 @@
  **************************************************************************/
 
 #define PROGRAM "LEGO DNA Sequencer - TCS34725 Color Sensor Unit Test"
-#define VERSION "Ver 0.1 2022-12-24"
+#define VERSION "Ver 0.1 2023-04-19"
 
 #define DEBUG_OUTPUT 1
 
@@ -28,6 +28,22 @@
 #define YELLOW  0
 
 #define LED_TCS34725  A3
+
+#define FLORA 1
+
+#if FLORA
+#define CLEAR_CHANNEL_THRESHHOLD  3149
+#define RED_CHANNEL_THRESHHOLD  700
+#define BLUE_CHANNEL_THRESHHOLD  823
+#else
+#define CLEAR_CHANNEL_THRESHHOLD  900
+#define RED_CHANNEL_THRESHHOLD  170
+#define BLUE_CHANNEL_THRESHHOLD  220
+#endif
+
+static int iCLEAR_CHANNEL_THRESHHOLD = CLEAR_CHANNEL_THRESHHOLD;
+static int iRED_CHANNEL_THRESHHOLD = RED_CHANNEL_THRESHHOLD;
+static int iBLUE_CHANNEL_THRESHHOLD = BLUE_CHANNEL_THRESHHOLD;
 
 /* Initialise with specific int time and gain values */
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_16X);
@@ -63,7 +79,24 @@ void loop(void) {
   Serial.print("Green: "); Serial.print(g, DEC); Serial.print(" ");
   Serial.print("Blue: "); Serial.print(b, DEC); Serial.print(" ");
   Serial.print("Clear: "); Serial.print(c, DEC); Serial.print(" ");  
-  Serial.println(" ");
+
+  if (c >= iCLEAR_CHANNEL_THRESHHOLD)
+  {
+    Serial.println(F("Y,C"));
+  }
+  else if (r >= iRED_CHANNEL_THRESHHOLD)
+  {
+    Serial.println(F("R,G"));
+  }
+  else if (b >= iBLUE_CHANNEL_THRESHHOLD)
+  {
+    Serial.println(F("B,T"));
+  }
+  else
+    /* if (g > b && g > r) */
+  {
+    Serial.println(F("G,A"));
+  }
   
   delay(1000);
 }
