@@ -14,7 +14,7 @@
  **************************************************************************/
 
 #define PROGRAM "LEGO DNA Sequencer - Stepper Motor Unit Test"
-#define VERSION "Ver 0.1 2023-04-19"
+#define VERSION "Ver 0.2 2025-08-04"
 
 #define DEBUG_OUTPUT 1
 
@@ -39,24 +39,32 @@ static int iSteps = 0;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(2500);
   Serial.println();
   Serial.println(PROGRAM);
   Serial.println(VERSION);
 
+// Turn off the RGB sensor white LED in case it is wired up
   pinMode (LED_TCS34725, OUTPUT); 
   digitalWrite (LED_TCS34725, LOW); 
 
   myStepper.setSpeed(10);
 
-  Serial.println("Hit debugger Send to enter Commands");
+  Serial.println("Serial Monitor Settings:");
+  Serial.println("  No Line Ending");
+  Serial.println("  115200 baud");
+  Serial.println("LEGO width is 550 steps");
+  Serial.println("");
+  Serial.print("Position = ");
+  Serial.println(iSteps);
   help();  
 }
 
 void help()
 {
-  Serial.println("Command Line Mode:");
-  Serial.println("  Fxxxx to go Forward  xxxx steps");
+  Serial.println("");
+  Serial.println("Command Line Mode: (4 digits required)");
+  Serial.println("  Fxxxx to go Forward xxxx steps");
   Serial.println("  Rxxxx to go Reverse xxxx steps");
 }
 
