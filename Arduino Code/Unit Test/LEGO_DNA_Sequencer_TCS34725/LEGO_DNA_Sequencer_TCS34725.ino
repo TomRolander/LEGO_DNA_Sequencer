@@ -14,7 +14,7 @@
  **************************************************************************/
 
 #define PROGRAM "LEGO DNA Sequencer - TCS34725 Color Sensor Unit Test"
-#define VERSION "Ver 0.1 2023-04-19"
+#define VERSION "Ver 0.2 2025-08-04"
 
 #define DEBUG_OUTPUT 1
 
@@ -54,6 +54,14 @@ void setup(void) {
   Serial.println();
   Serial.println(PROGRAM);
   Serial.println(VERSION);
+  Serial.println("");
+
+  Serial.println("Remove LEGO tray");
+  Serial.println("Remove the gear from the top of the stepper motor shaft");
+  Serial.println("Insert the 10 LEGO test bricks YYRRBBGGYY into the LEGO tray");
+  Serial.println("Manually slide the LEGO tray backwards and forwards under the sensor");
+  delay(5000);
+
 
   pinMode (LED_TCS34725, OUTPUT); 
   digitalWrite (LED_TCS34725, LOW); 
@@ -72,30 +80,47 @@ void setup(void) {
   tcs.setInterrupt(false);
 }
 
+void print4digits(int iVal)
+{
+  if (iVal < 10) {
+    Serial.print("   "); // 3 spaces
+  } else if (iVal < 100) {
+    Serial.print("  "); // 2 spaces
+  } else if (iVal < 1000) {
+    Serial.print(" "); // 1 space
+  } 
+  Serial.print(iVal);
+}
+
 void loop(void) {
   uint16_t r, g, b, c;
   tcs.getRawData(&r, &g, &b, &c);
-  Serial.print("Red: "); Serial.print(r, DEC); Serial.print(" ");
-  Serial.print("Green: "); Serial.print(g, DEC); Serial.print(" ");
-  Serial.print("Blue: "); Serial.print(b, DEC); Serial.print(" ");
-  Serial.print("Clear: "); Serial.print(c, DEC); Serial.print(" ");  
+  Serial.print("Red: "); print4digits(r); Serial.print(" ");
+  Serial.print("Green: "); print4digits(g); Serial.print(" ");
+  Serial.print("Blue: "); print4digits(b); Serial.print(" ");
+  Serial.print("Clear: "); print4digits(c); Serial.print(" ");  
+  Serial.print(F("DNA: "));  
 
   if (c >= iCLEAR_CHANNEL_THRESHHOLD)
   {
-    Serial.println(F("Y,C"));
+    Serial.print("C"); Serial.print(" ");  
+    Serial.println(F("YELLOW"));
   }
   else if (r >= iRED_CHANNEL_THRESHHOLD)
   {
-    Serial.println(F("R,G"));
-  }
+    Serial.print("G"); Serial.print(" ");  
+    Serial.println(F("RED"));
+ }
   else if (b >= iBLUE_CHANNEL_THRESHHOLD)
   {
-    Serial.println(F("B,T"));
+    Serial.print("T"); Serial.print(" ");  
+    Serial.println(F("BLUE"));
   }
   else
     /* if (g > b && g > r) */
   {
-    Serial.println(F("G,A"));
+    Serial.print("A"); Serial.print(" ");  
+    Serial.println(F("GREEN"));
   }
   
   delay(1000);
