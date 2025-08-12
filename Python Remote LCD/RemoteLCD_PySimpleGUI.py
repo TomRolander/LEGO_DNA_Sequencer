@@ -28,7 +28,8 @@ import time
 import serial
 import argparse
 from types import NoneType
-import PySimpleGUI as sg
+#import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
 def getbackgroundcolor(x):
     if chr(x) == 'A':
@@ -54,7 +55,8 @@ parser.add_argument('--showports', required=False, choices=('True','False'))
 args = parser.parse_args()
 
 if type(args.showports) is not NoneType:
-    os.system("python -m serial.tools.list_ports")
+#    os.system("python -m serial.tools.list_ports")
+    os.system("py -m serial.tools.list_ports")
     exit(0)
 
 if type(args.comport) is NoneType:
