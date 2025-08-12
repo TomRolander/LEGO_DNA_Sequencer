@@ -43,7 +43,6 @@ def Draw():
 
 def Refresher():
     global text
-
     if SerialObj.in_waiting != 0:
         letter = SerialObj.read()
         if letter == b'[':
@@ -54,7 +53,7 @@ def Refresher():
             #text.configure(text="0123456789012345\n" + time.asctime())
             text.configure(text= "  " + str(lcd1, 'UTF-8') + "\n  " + str(lcd2, 'UTF-8'))
             #text.configure(text= lcd1 + "\n" + lcd2)
-    root.after(1000, Refresher) # every second...
+    root.after(10, Refresher) 
 
 print (Program, Version, RevisionDate)
 
@@ -64,7 +63,8 @@ parser.add_argument('--showports', required=False, choices=('True','False'))
 args = parser.parse_args()
 
 if type(args.showports) is not NoneType:
-    os.system("python -m serial.tools.list_ports")
+#    os.system("python -m serial.tools.list_ports")
+    os.system("py -m serial.tools.list_ports")
     exit(0)
 
 if type(args.comport) is NoneType:
