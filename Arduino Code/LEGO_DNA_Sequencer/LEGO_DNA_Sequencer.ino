@@ -14,16 +14,16 @@
  **************************************************************************/
 
 #define PROGRAM F("LEGO DNA Sequencer - Main Program")
-#define VERSION F("Ver 0.9 2023-03-29")
+#define VERSION F("Ver 0.9 2024-09-09")
 #define PROGRAM_SHORT F("LEGO DNA Sqncr  ")
-#define VERSION_SHORT F("Ver 0.9 03-29-23")
+#define VERSION_SHORT F("Ver 0.9 09-09-24")
 
-#define DEBUG_OUTPUT 0
+#define DEBUG_OUTPUT 1
 #define DEBUG_MODE   0
 
 #define FILTER_BAD_WORDS  0
 
-#define FLORA 0
+#define FLORA 1
 
 #define STATE_START       0
 #define STATE_LOAD_TRAY   1
@@ -451,6 +451,18 @@ void UpdateLCD(char cColor, int index)
   lcd.print(cColor);
 }
 
+void print4digits(uint16_t iVal)
+{
+  if (iVal < 10) {
+    Serial.print(F("   ")); // 3 spaces
+  } else if (iVal < 100) {
+    Serial.print(F("  ")); // 2 spaces
+  } else if (iVal < 1000) {
+    Serial.print(F(" ")); // 1 space
+  } 
+  Serial.print(iVal);
+}
+
 char GetLEGOColor(int index)
 {
   char cRetcode = '\0';
@@ -465,11 +477,11 @@ char GetLEGOColor(int index)
   iBrickSequencing[index][3] = c;
 
 #if DEBUG_OUTPUT
-  Serial.print(iStepPosition, DEC); Serial.print(F(","));
-  Serial.print(r, DEC); Serial.print(F(","));
-  Serial.print(g, DEC); Serial.print(F(","));
-  Serial.print(b, DEC); Serial.print(F(","));
-  Serial.print(c, DEC); Serial.print(F(","));
+  print4digits(iStepPosition); Serial.print(F(","));
+  print4digits(r); Serial.print(F(","));
+  print4digits(g); Serial.print(F(","));
+  print4digits(b); Serial.print(F(","));
+  print4digits(c); Serial.print(F(","));
 #endif
 
   if (c >= iCLEAR_CHANNEL_THRESHHOLD)
@@ -477,7 +489,7 @@ char GetLEGOColor(int index)
     UpdateLCD(YELLOW, index);
     cRetcode = YELLOW;
 #if DEBUG_OUTPUT
-    Serial.println(F("Y,C"));
+    Serial.println(F("YLW"));
 #endif    
   }
   else if (r >= iRED_CHANNEL_THRESHHOLD)
@@ -485,7 +497,7 @@ char GetLEGOColor(int index)
     UpdateLCD(RED, index);
     cRetcode = RED;
 #if DEBUG_OUTPUT
-    Serial.println(F("R,G"));
+    Serial.println(F("RED"));
 #endif    
   }
   else if (b >= iBLUE_CHANNEL_THRESHHOLD)
@@ -493,7 +505,7 @@ char GetLEGOColor(int index)
     UpdateLCD(BLUE, index);
     cRetcode = BLUE;
 #if DEBUG_OUTPUT
-    Serial.println(F("B,T"));
+    Serial.println(F("BLU"));
 #endif    
   }
   else
@@ -502,7 +514,7 @@ char GetLEGOColor(int index)
     UpdateLCD(GREEN, index);
     cRetcode = GREEN;
 #if DEBUG_OUTPUT
-    Serial.println(F("G,A"));
+    Serial.println(F("GRN"));
 #endif    
   }
 
@@ -1021,7 +1033,7 @@ void loop()
 #if DEBUG_OUTPUT
   Serial.println("");
   Serial.println(F("---------- CSV ----------"));
-  Serial.println(F("P,R,G,B,Y,M,DNA"));
+  Serial.println(F("   P,   R,   G,   B,   Y, M,DNA"));
 #endif
 
   for (int i = 0; i < NMB_LEGO_BRICKS; i++)
