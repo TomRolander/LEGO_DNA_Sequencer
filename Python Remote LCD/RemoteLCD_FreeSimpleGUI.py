@@ -1,6 +1,6 @@
 """
 /**************************************************************************
-  RemoteLDC_PySimpleGUI
+  RemoteLDC_FreeSimpleGUI
     The purpose of this Python program is to remotely display the
   contents of an Arduino 1602 LCD.  It was created to facilitate 
   a large group of persons watching the LEGO DNA Sequencer.
@@ -18,7 +18,7 @@
  **************************************************************************/
 
 """
-Program = "RemoteLCD_PySimpleGUI"
+Program = "RemoteLCD_FreeSimpleGUI"
 Version = "Ver 0.3"
 RevisionDate = "2023-01-16"
 
@@ -28,7 +28,6 @@ import time
 import serial
 import argparse
 from types import NoneType
-#import PySimpleGUI as sg
 import FreeSimpleGUI as sg
 
 def getbackgroundcolor(x):
