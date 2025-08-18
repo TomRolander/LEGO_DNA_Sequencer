@@ -19,8 +19,8 @@
 
 """
 Program = "RemoteLCD_FreeSimpleGUI"
-Version = "Ver 0.3"
-RevisionDate = "2023-01-16"
+Version = "Ver 0.4"
+RevisionDate = "2025-08-18"
 
 import sys
 import os
